@@ -1,8 +1,8 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome } from '@fortawesome/free-solid-svg-icons';
+import React from "react";
+import { Link } from "react-router-dom";
+import styled from "styled-components";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHome } from "@fortawesome/free-solid-svg-icons";
 
 const AboutContainer = styled.div`
   max-width: 800px;
@@ -45,7 +45,7 @@ const HomeButton = styled(Link)`
   text-decoration: none;
   font-size: 1.2rem;
   transition: background-color 0.3s;
-  
+
   &:hover {
     background-color: #0069d9;
     text-decoration: none;
@@ -59,7 +59,7 @@ const GameModeList = styled.ul`
 
 const GameModeItem = styled.li`
   margin-bottom: 1rem;
-  
+
   strong {
     color: var(--primary-color);
   }
@@ -67,59 +67,65 @@ const GameModeItem = styled.li`
 
 /**
  * About page component showing information about the game
- * 
+ *
  * @returns {JSX.Element} - Rendered component
  */
 const About = () => {
   return (
     <AboutContainer>
-      <Title>Tentang Petualangan Ajaib Calistung</Title>
-      
+      <Title>Tentang </Title>
+
       <Section>
         <SectionTitle>Apa itu Calistung?</SectionTitle>
         <p>
-          Calistung adalah singkatan dari Membaca, Menulis, dan Berhitung. 
-          Aplikasi permainan ini dirancang untuk membantu anak-anak berkebutuhan khusus 
-          belajar keterampilan dasar melalui cara yang menyenangkan dan interaktif.
+          Calistung adalah singkatan dari Membaca, Menulis, dan Berhitung.
+          Aplikasi permainan ini dirancang untuk membantu anak-anak berkebutuhan
+          khusus belajar keterampilan dasar melalui cara yang menyenangkan dan
+          interaktif.
         </p>
       </Section>
-      
+
       <Section>
         <SectionTitle>Cara Bermain</SectionTitle>
         <GameModeList>
           <GameModeItem>
-            <strong>Mode Membaca</strong> - Dengarkan kata yang diucapkan, lalu ucapkan kembali kata tersebut 
-            melalui mikrofon. Anda akan mendapat umpan balik tentang pengucapan Anda.
+            <strong>Mode Membaca</strong> - Dengarkan kata yang diucapkan, lalu
+            ucapkan kembali kata tersebut melalui mikrofon. Anda akan mendapat
+            umpan balik tentang pengucapan Anda.
           </GameModeItem>
           <GameModeItem>
-            <strong>Mode Menulis</strong> - Lihat huruf atau angka yang ditampilkan, lalu tuliskan dengan menggunakan 
-            mouse pada papan gambar. Sistem akan menilai kecocokan tulisan Anda.
+            <strong>Mode Menulis</strong> - Lihat huruf atau angka yang
+            ditampilkan, lalu tuliskan dengan menggunakan mouse pada papan
+            gambar. Sistem akan menilai kecocokan tulisan Anda.
           </GameModeItem>
           <GameModeItem>
-            <strong>Mode Berhitung</strong> - Jawab soal-soal matematika sederhana dengan bantuan visual. 
-            Pilih jawaban yang benar dari opsi yang tersedia.
+            <strong>Mode Berhitung</strong> - Jawab soal-soal matematika
+            sederhana dengan bantuan visual. Pilih jawaban yang benar dari opsi
+            yang tersedia.
           </GameModeItem>
         </GameModeList>
       </Section>
-      
+
       <Section>
         <SectionTitle>Sistem Permainan</SectionTitle>
         <p>
-          Anda memulai dengan 3 nyawa (hati). Setiap jawaban yang salah akan mengurangi 1 nyawa. 
-          Jika semua nyawa habis, Anda dapat memulai ulang permainan. Setiap jawaban benar akan
-          memberikan Anda umpan balik positif dan mendorong Anda untuk terus belajar!
+          Anda memulai dengan 3 nyawa (hati). Setiap jawaban yang salah akan
+          mengurangi 1 nyawa. Jika semua nyawa habis, Anda dapat memulai ulang
+          permainan. Setiap jawaban benar akan memberikan Anda umpan balik
+          positif dan mendorong Anda untuk terus belajar!
         </p>
       </Section>
-      
+
       <Section>
         <SectionTitle>Tentang Pengembang</SectionTitle>
         <p>
-          Aplikasi ini dikembangkan untuk membantu anak-anak berkebutuhan khusus belajar 
-          keterampilan dasar dengan cara yang inklusif dan menyenangkan. Kami percaya bahwa 
-          setiap anak memiliki potensi untuk belajar dan tumbuh dengan dukungan yang tepat.
+          Aplikasi ini dikembangkan untuk membantu anak-anak berkebutuhan khusus
+          belajar keterampilan dasar dengan cara yang inklusif dan menyenangkan.
+          Kami percaya bahwa setiap anak memiliki potensi untuk belajar dan
+          tumbuh dengan dukungan yang tepat.
         </p>
       </Section>
-      
+
       <HomeButton to="/" aria-label="Kembali ke Menu Utama">
         <FontAwesomeIcon icon={faHome} /> Kembali ke Menu Utama
       </HomeButton>
