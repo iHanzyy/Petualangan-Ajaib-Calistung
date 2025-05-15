@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faRedo, faVolumeUp } from '@fortawesome/free-solid-svg-icons';
 
 import HomeButton from '../UI/HomeButton';
 import HeartDisplay from '../UI/HeartDisplay';
@@ -72,16 +72,15 @@ const GameContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 2rem;
+  justify-content: flex-start;
+  padding: 1rem;
   position: relative;
-  min-height: 80vh;
-  background-image: url('/images/background-berhitung.png');
-  background-size: cover; /* Change back to 'cover' from 'contain' */
-  background-position: center;
-  background-repeat: no-repeat;
+  height: 100vh;
+  width: 100%;
+  background: url('/images/background-berhitung.png') no-repeat center center fixed;
+  background-size: cover;
+  overflow: hidden;
   
-  /* Add semi-transparent overlay to ensure content remains readable */
   &::before {
     content: '';
     position: absolute;
@@ -93,119 +92,171 @@ const GameContainer = styled.div`
     z-index: 0;
   }
   
-  /* Make child elements appear above overlay */
   & > * {
     position: relative;
     z-index: 1;
   }
 `;
 
-// Add this new styled component
-const HomeButtonWrapper = styled.div`
+const HeaderContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  position: relative;
+`;
+
+const Title = styled.h1`
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  text-align: center;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
   position: absolute;
-  top: 1rem;
-  left: 1rem;
-  z-index: 2;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
 `;
 
 const ProblemDisplay = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  font-size: 2.5rem;
+  font-size: 3rem;
   margin: 2rem 0;
+  padding: 2rem 4rem;
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  min-width: 300px;
+  text-align: center;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 
 const ObjectsContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.5rem;
-  margin: 1rem 0;
-  font-size: 2rem;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+`;
+
+const ObjectImage = styled.img`
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+  }
 `;
 
 const AnswerContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
   margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 `;
 
 const AnswerButton = styled.button`
-  font-size: 2rem;
-  padding: 1rem 2rem;
-  border-radius: var(--border-radius);
+  font-size: 2.5rem;
+  padding: 1.5rem 2rem;
   background-color: var(--light-color);
-  color: var(--dark-color);
-  border: none;
+  border: 3px solid var(--secondary-color);
+  border-radius: var(--border-radius);
   cursor: pointer;
-  transition: transform 0.3s ease, background-color 0.3s ease;
-  width: 120px;
-  height: 80px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   
   &:hover {
-    transform: translateY(-5px);
-    background-color: var(--primary-light-color);
+    transform: scale(1.05);
+    background-color: var(--secondary-color);
+    color: white;
   }
   
   &:active {
-    transform: translateY(0);
+    transform: scale(0.95);
   }
 `;
 
 const OperationSymbol = styled.span`
-  font-size: 2.5rem;
-  margin: 0 1rem;
+  font-size: 3rem;
+  margin: 0 1.5rem;
+  color: var(--primary-color);
 `;
 
 const EqualsSymbol = styled.span`
-  font-size: 2.5rem;
-  margin: 0 1rem;
+  font-size: 3rem;
+  margin: 0 1.5rem;
+  color: var(--primary-color);
 `;
 
-const QuestionMark = styled.span`
-  font-size: 2.5rem;
-  background-color: var(--warning-color);
+const QuestionMark = styled.div`
+  width: 60px;
+  height: 60px;
+  background-color: var(--primary-color);
   color: white;
-  width: 50px;
-  height: 50px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 2.5rem;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 `;
 
 const Score = styled.div`
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  font-size: 1.5rem;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1.8rem;
   font-weight: bold;
   background-color: var(--light-color);
-  padding: 0.5rem 1rem;
+  padding: 0.8rem 1.5rem;
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 2;
 `;
 
-const NextButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1.5rem;
-  font-size: 1.2rem;
+const SpeechButton = styled.button`
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: 50%;
+  width: 4rem;
+  height: 4rem;
+  font-size: 2rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 2;
   
   &:hover {
-    transform: translateY(-3px);
-    background-color: var(--primary-dark-color);
+    transform: scale(1.1);
+    background-color: var(--secondary-color);
+  }
+  
+  &:active {
+    transform: scale(0.95);
   }
 `;
 
@@ -366,9 +417,10 @@ const Counting = () => {
   if (isLoading) {
     return (
       <GameContainer>
-        <HomeButtonWrapper>
+        <HeaderContainer>
           <HomeButton />
-        </HomeButtonWrapper>
+          <Score>Skor: {score}</Score>
+        </HeaderContainer>
         
         <HeartDisplay lives={lives} />
         
@@ -383,18 +435,19 @@ const Counting = () => {
   if (hasError) {
     return (
       <GameContainer>
-        <HomeButtonWrapper>
+        <HeaderContainer>
           <HomeButton />
-        </HomeButtonWrapper>
+          <Score>Skor: {score}</Score>
+        </HeaderContainer>
         
         <HeartDisplay lives={lives} />
         
         <div className="error-screen">
           <h2>Terjadi Kesalahan</h2>
           <p>Maaf, terjadi kesalahan saat memuat mode berhitung.</p>
-          <NextButton as="a" href="/">
+          <SpeechButton as="a" href="/">
             Kembali ke Menu
-          </NextButton>
+          </SpeechButton>
         </div>
       </GameContainer>
     );
@@ -403,15 +456,12 @@ const Counting = () => {
   // Main render
   return (
     <GameContainer>
-      <HomeButtonWrapper>
+      <HeaderContainer>
         <HomeButton />
-      </HomeButtonWrapper>
+        <Score>Skor: {score}</Score>
+      </HeaderContainer>
       
       <HeartDisplay lives={lives} />
-      
-      <Score>Skor: {score}</Score>
-      
-      <h1>Mode Berhitung</h1>
       
       {/* Only render objects if problem is defined */}
       {problem && problem.objectType && (
@@ -433,6 +483,7 @@ const Counting = () => {
       <AnswerContainer ref={answerContainerRef} className="answer-container">
         {answerOptions.map((answer, index) => (
           <AnswerButton
+            key={index}
             onClick={() => checkAnswer(answer)}
           >
             {answer}
@@ -441,13 +492,12 @@ const Counting = () => {
       </AnswerContainer>
       
       {/* Accessibility button to read problem */}
-      <button 
+      <SpeechButton 
         onClick={() => speak(`${problem?.a || 0} ${problem?.operation || '+'} ${problem?.b || 0} sama dengan berapa?`)} 
-        className="speech-button"
         aria-label="Bacakan soal"
       >
-        Dengarkan Soal
-      </button>
+        <FontAwesomeIcon icon={faVolumeUp} /> Dengarkan Soal
+      </SpeechButton>
       
       {/* Success Modal */}
       <FeedbackModal

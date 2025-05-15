@@ -40,7 +40,7 @@ const StyledHomeButton = styled(Link)`
  */
 const HomeButton = () => {
   return (
-    <StyledHomeButton to="/home" aria-label="Kembali ke Menu Utama">
+    <StyledHomeButton to="/menu" aria-label="Kembali ke Menu Utama">
       <FontAwesomeIcon icon={faHome} />
     </StyledHomeButton>
   );

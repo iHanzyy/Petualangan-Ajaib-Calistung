@@ -144,7 +144,7 @@ function App() {
             <Counting />
           </ErrorBoundary>
         } />
-        <Route path="*" element={<Navigate to="/menu" replace />} />
+        
       </Routes>
     </Router>
   );
