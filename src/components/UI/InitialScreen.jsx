@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import styled, { keyframes } from 'styled-components';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../styles/SplashScreen.css';
+import Howler from 'howler';
+import styled, { keyframes } from 'styled-components';
 
 // Animasi untuk karakter melompat
 const bounce = keyframes`
@@ -29,8 +29,8 @@ const rotate = keyframes`
   100% { transform: rotate(0deg); }
 `;
 
-// Container untuk splash screen
-const SplashContainer = styled.div`
+// Container untuk initial screen
+const InitialContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -87,55 +87,76 @@ const Title = styled.h1`
   margin-bottom: 1.5rem;
 `;
 
-// Subtitle / Loading text
-const Subtitle = styled.div`
+// Subtitle
+const Subtitle = styled.p`
   font-size: 1.5rem;
   color: white;
+  text-shadow: 1px 2px 4px rgba(0,0,0,0.3);
   animation: ${fadeIn} 1.5s ease-out 0.5s both;
+  text-align: center;
+  margin-bottom: 2rem;
 `;
 
-// Loading dots animation
-const LoadingDots = styled.span`
-  &:after {
-    content: '.';
-    animation: dots 1.5s steps(5, end) infinite;
-    
-    @keyframes dots {
-      0%, 20% { content: '.'; }
-      40% { content: '..'; }
-      60% { content: '...'; }
-      80%, 100% { content: ''; }
-    }
+// Tombol mulai
+const StartButton = styled.button`
+  padding: 1.5rem 3rem;
+  font-size: 1.8rem;
+  background: #FFC107;
+  color: #000;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: ${fadeIn} 1.5s ease-out 1s both;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+
+  &:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    background: #FFD54F;
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 `;
 
-const SplashScreen = () => {
+const InitialScreen = () => {
   const navigate = useNavigate();
-  const [showLoadingText, setShowLoadingText] = useState(false);
-  
+
+  const handleStart = () => {
+    // Resume audio context on first interaction
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume();
+    }
+    // Navigate to splash screen after user interaction
+    navigate('/splash');
+  };
+
+  // Add touchstart listener for mobile
   useEffect(() => {
-    // Show loading text after 1 second
-    const loadingTimer = setTimeout(() => {
-      setShowLoadingText(true);
-    }, 1000);
-    
-    // Navigate to main menu after splash screen
-    const navigationTimer = setTimeout(() => {
-      navigate('/menu');
-    }, 4500);
-    
-    // Cleanup timers when component unmounts
-    return () => {
-      clearTimeout(loadingTimer);
-      clearTimeout(navigationTimer);
+    const handleTouchStart = () => {
+      if (Howler.ctx && Howler.ctx.state !== 'running') {
+        Howler.ctx.resume();
+      }
     };
-  }, [navigate]);
-  
+
+    document.addEventListener('touchstart', handleTouchStart, { once: true });
+    
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, []);
+
   // Array of characters for the bouncing animation
   const characters = ['📚', '✏️', '🔢'];
   
   return (
-    <SplashContainer>
+    <InitialContainer>
       {/* Background bubbles */}
       <Bubble $size="100px" $top="10%" $left="10%" $duration="7s" $moveX="50px" $moveY="30px" />
       <Bubble $size="60px" $top="70%" $left="20%" $duration="9s" $moveX="-30px" $moveY="-50px" />
@@ -155,16 +176,16 @@ const SplashScreen = () => {
         ))}
       </CharacterContainer>
       
-      {/* Title and loading text */}
+      {/* Title and subtitle */}
       <Title>Petualangan Ajaib Calistung</Title>
+      <Subtitle>Selamat datang di dunia belajar yang menyenangkan!</Subtitle>
       
-      {showLoadingText && (
-        <Subtitle>
-          Memuat petualangan <LoadingDots />
-        </Subtitle>
-      )}
-    </SplashContainer>
+      {/* Start button */}
+      <StartButton onClick={handleStart}>
+        Mulai Petualangan
+      </StartButton>
+    </InitialContainer>
   );
 };
 
-export default SplashScreen;
+export default InitialScreen; 

@@ -1,5 +1,6 @@
 /* Import application styles */
 @import './styles/App.css';
+@import url('https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap');
 
 /* Global styles for Petualangan Ajaib Calistung */
 :root {

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { Howl, Howler } from 'howler'; // Pastikan Howler juga diimpor
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Howl, Howler } from 'howler';
 
 /**
  * Custom hook to handle audio playback using Howler.js
@@ -10,91 +10,110 @@ import { Howl, Howler } from 'howler'; // Pastikan Howler juga diimpor
 const useAudio = (sounds) => {
   const soundsRef = useRef({});
   const playingRef = useRef([]);
-  const lastPlayedRef = useRef({}); // Untuk throttling suara yang sama
+  const [isAudioReady, setIsAudioReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Initialize sounds
   useEffect(() => {
-    // Unload any existing sounds first to prevent memory issues
-    Object.values(soundsRef.current).forEach(sound => {
-      if (sound && sound.unload) {
-        sound.unload();
-      }
-    });
+    let isMounted = true;
     
-    // Memastikan Howler tidak memblokir audio di masa depan
-    Howler.autoUnlock = true;
-    Howler.autoSuspend = false; // Mencegah Howler mensuspend audio context
-    
-    // Create new sound instances
-    Object.entries(sounds).forEach(([name, src]) => {
-      soundsRef.current[name] = new Howl({
-        src: [src],
-        volume: 0.7,
-        preload: true,
-        html5: true, // Menggunakan HTML5 Audio untuk kompatibilitas lebih baik
-        onend: function(id) {
-          // Remove from playing array when done
-          playingRef.current = playingRef.current.filter(soundId => soundId !== id);
-        },
-        onloaderror: function(id, err) {
-          console.warn(`Error loading sound ${name}:`, err);
-          // Coba load ulang untuk recover
-          setTimeout(() => {
-            this.load();
-          }, 500);
-        },
-        onplayerror: function(id, err) {
-          console.warn(`Error playing sound ${name}:`, err);
-          // Recover dengan unload dan reload
-          const currentSrc = this._src;
-          this.unload();
-          
-          setTimeout(() => {
-            soundsRef.current[name] = new Howl({
-              src: currentSrc,
+    const initializeAudio = async () => {
+      if (isLoading) return;
+      setIsLoading(true);
+      
+      try {
+        // Unload any existing sounds first
+        Object.values(soundsRef.current).forEach(sound => {
+          if (sound && sound.unload) {
+            sound.unload();
+          }
+        });
+        
+        // Configure Howler
+        Howler.autoUnlock = true;
+        Howler.autoSuspend = false;
+        
+        // Create new sound instances with better error handling
+        const soundPromises = Object.entries(sounds).map(([name, src]) => {
+          return new Promise((resolve) => {
+            const sound = new Howl({
+              src: [src],
               volume: 0.7,
               preload: true,
-              html5: true
+              html5: true,
+              onload: () => {
+                if (isMounted) {
+                  soundsRef.current[name] = sound;
+                  resolve();
+                }
+              },
+              onloaderror: (id, err) => {
+                console.warn(`Error loading sound ${name}:`, err);
+                if (isMounted) {
+                  // Retry loading after a delay
+                  setTimeout(() => {
+                    sound.load();
+                  }, 1000);
+                }
+              }
             });
-          }, 100);
+          });
+        });
+        
+        await Promise.all(soundPromises);
+        if (isMounted) {
+          setIsAudioReady(true);
         }
-      });
-    });
+      } catch (error) {
+        console.error('Error initializing sounds:', error);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
     
-    // Touch untuk unlock audio di mobile
-    document.addEventListener('touchstart', function() {
+    // Initialize audio after user interaction
+    const handleUserInteraction = () => {
       if (Howler.ctx && Howler.ctx.state !== 'running') {
         Howler.ctx.resume();
       }
-    }, { once: true });
+      initializeAudio();
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
     
-    // Cleanup function to release audio resources
+    // Add interaction listeners
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    
     return () => {
-      // Stop all playing sounds
-      playingRef.current.forEach(id => {
-        Howler.stop(id);
-      });
+      isMounted = false;
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
       
-      // Unload all sounds
+      // Cleanup sounds
       Object.values(soundsRef.current).forEach(sound => {
         if (sound && sound.unload) {
           sound.unload();
         }
       });
       
-      // Clear references
       soundsRef.current = {};
       playingRef.current = [];
-      lastPlayedRef.current = {};
     };
-  }, [sounds]);
+  }, [sounds, isLoading]);
   
-  // Function to play a specific sound
   const play = useCallback((name) => {
+    if (!isAudioReady) {
+      console.warn('Audio not ready yet. Please wait for user interaction.');
+      return null;
+    }
+    
     const sound = soundsRef.current[name];
     if (!sound) return null;
-
-    // Hanya hentikan suara lain jika correct/wrong/gameOver
+    
+    // Handle special cases
     if (['correct', 'wrong', 'gameOver'].includes(name)) {
       Object.values(soundsRef.current).forEach(s => {
         if (s !== sound && s.playing()) {
@@ -103,24 +122,24 @@ const useAudio = (sounds) => {
       });
       sound.volume(0.9);
     }
-
-    // Untuk click, biarkan overlap (tidak stop suara lain)
+    
     if (name === 'click') {
-      sound.volume(0.5); // volume lebih kecil agar tidak mengganggu
+      sound.volume(0.5);
     }
-
+    
     try {
       if (Howler.ctx && Howler.ctx.state !== 'running') {
         Howler.ctx.resume();
       }
       const id = sound.play();
+      playingRef.current.push(id);
       return id;
     } catch (err) {
+      console.warn(`Error playing sound ${name}:`, err);
       return null;
     }
-  }, [sounds]);
+  }, [isAudioReady]);
   
-  // Function to stop all sounds
   const stopAll = useCallback(() => {
     Object.values(soundsRef.current).forEach(sound => {
       if (sound && sound.stop) {
@@ -130,7 +149,7 @@ const useAudio = (sounds) => {
     playingRef.current = [];
   }, []);
   
-  return { play, stopAll };
+  return { play, stopAll, isAudioReady, isLoading };
 };
 
 export default useAudio;

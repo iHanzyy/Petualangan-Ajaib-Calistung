@@ -1,8 +1,35 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBook, faPencilAlt, faCalculator, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+
+// Animasi untuk judul
+const bounce = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+`;
+
+const rainbow = keyframes`
+  0% { color: #FF5757; }
+  25% { color: #FFC857; }
+  50% { color: #70C1B3; }
+  75% { color: #6B76FF; }
+  100% { color: #FF5757; }
+`;
+
+const float = keyframes`
+  0% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-10px) rotate(2deg); }
+  66% { transform: translateY(5px) rotate(-2deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+`;
+
+// Animasi untuk sparkles
+const sparkle = keyframes`
+  0%, 100% { opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1.2); }
+`;
 
 // Styled components for more engaging UI
 const MenuContainer = styled.div`
@@ -26,29 +53,62 @@ const MenuContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.3); /* Semi-transparent overlay for better text readability */
+    background-color: rgba(255, 255, 255, 0); /* Semi-transparent overlay for better text readability */
     z-index: 0;
   }
 `;
 
 // Meningkatkan kontras untuk title, subtitle, dan button container
 const Title = styled.h1`
-  font-size: 3rem;
+  font-family: 'Cal Sans', sans-serif;
+  font-size: 4rem;
   color: var(--primary-color);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4), 
+               0 0 5px rgba(255, 255, 255, 0.8),
+               0 0 15px rgba(255, 255, 255, 0.5);
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   position: relative;
   z-index: 1;
+  animation: ${rainbow} 8s infinite, ${bounce} 2s ease-in-out infinite;
+  letter-spacing: 2px;
+  -webkit-text-stroke: 1px rgba(0, 0, 0, 0.2);
+  
+  &::before, &::after {
+    content: "✨";
+    position: absolute;
+    font-size: 2rem;
+    animation: ${sparkle} 1.5s infinite;
+  }
+  
+  &::before {
+    left: -2rem;
+    top: -0.5rem;
+    animation-delay: 0.2s;
+  }
+  
+  &::after {
+    right: -2rem;
+    top: -0.5rem;
+    animation-delay: 0.7s;
+  }
 `;
 
 const Subtitle = styled.h2`
+  font-family: 'Cal Sans', sans-serif;
   font-size: 1.8rem;
-  color: var(--secondary-color);
+  color: var(--primary-dark-color);
   text-align: center;
   margin-bottom: 2rem;
   position: relative;
   z-index: 1;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3),
+               0 0 10px rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1.5rem;
+  border-radius: 30px;
+  backdrop-filter: blur(2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 `;
 
 const ButtonsContainer = styled.div`
@@ -91,15 +151,32 @@ const IconWrapper = styled.span`
   font-size: 1.5rem;
 `;
 
+const AnimatedLetter = styled.span`
+  display: inline-block;
+  animation: ${bounce} 1s ease-in-out infinite;
+  animation-delay: ${props => props.$delay || '0s'};
+`;
+
 /**
  * Main Menu component for game mode selection
  * 
  * @returns {JSX.Element} Rendered component
  */
 const Menu = () => {
+  const title = "PETUALANGAN AJAIB CALISTUNG";
+  
   return (
     <MenuContainer>
-      <Title>Petualangan Ajaib Calistung</Title>
+      <Title>
+        {title.split('').map((letter, index) => (
+          <AnimatedLetter 
+            key={index}
+            $delay={`${index * 0.09}s`}
+          >
+            {letter === ' ' ? '\u00A0' : letter}
+          </AnimatedLetter>
+        ))}
+      </Title>
       <Subtitle>Mari Belajar Membaca, Menulis, dan Berhitung!</Subtitle>
       
       <ButtonsContainer>
@@ -113,7 +190,7 @@ const Menu = () => {
           Mode Menulis
         </MenuButton>
         
-        <MenuButton to="/counting" color="var(--warning-color)" aria-label="Mode Berhitung">
+        <MenuButton to="/counting" color="var(--primary-dark-color)" aria-label="Mode Berhitung">
           <IconWrapper><FontAwesomeIcon icon={faCalculator} /></IconWrapper>
           Mode Berhitung
         </MenuButton>

@@ -120,7 +120,7 @@ const About = () => {
         </p>
       </Section>
       
-      <HomeButton to="/" aria-label="Kembali ke Menu Utama">
+      <HomeButton to="/menu" aria-label="Kembali ke Menu Utama">
         <FontAwesomeIcon icon={faHome} /> Kembali ke Menu Utama
       </HomeButton>
     </AboutContainer>
