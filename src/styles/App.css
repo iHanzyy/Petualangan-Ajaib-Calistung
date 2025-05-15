@@ -1,0 +1,334 @@
+/* Global Styles for Petualangan Ajaib Calistung Game */
+
+:root {
+  /* Color variables - High contrast for ABK-Friendly design */
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-color: #f8f9fa;
+  --dark-color: #343a40;
+  --background-color: #ffffff;
+  --text-color: #212529;
+  --link-color: #0056b3;
+  --border-color: #dee2e6;
+
+  /* Font sizes - Larger for better readability */
+  --font-size-xl: 2.5rem;
+  --font-size-lg: 2rem;
+  --font-size-md: 1.5rem;
+  --font-size-sm: 1.25rem;
+  --font-size-xs: 1rem;
+
+  /* Spacing */
+  --spacing-xl: 3rem;
+  --spacing-lg: 2rem;
+  --spacing-md: 1.5rem;
+  --spacing-sm: 1rem;
+  --spacing-xs: 0.5rem;
+
+  /* Border radius */
+  --border-radius: 0.5rem;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Comic Sans MS', 'Bubblegum Sans', 'Arial', sans-serif;
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  overflow-x: hidden;
+}
+
+/* Accessibility - Focus indicators */
+*:focus {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Buttons */
+button {
+  cursor: pointer;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-md);
+  border-radius: var(--border-radius);
+  border: 2px solid transparent;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+button:hover {
+  transform: scale(1.05);
+  background-color: #0069d9;
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+button.secondary {
+  background-color: var(--secondary-color);
+}
+
+button.success {
+  background-color: var(--success-color);
+}
+
+button.danger {
+  background-color: var(--danger-color);
+}
+
+/* Links */
+a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+/* Game container */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 85vh;
+  padding: var(--spacing-lg);
+}
+
+/* Menu styles */
+.menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.menu-button {
+  width: 300px;
+  font-size: var(--font-size-lg);
+  padding: var(--spacing-md);
+  margin: var(--spacing-sm) 0;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* Header */
+header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+/* Footer */
+footer {
+  background-color: var(--dark-color);
+  color: white;
+  text-align: center;
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+/* Heart display */
+.hearts-container {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-md) 0;
+}
+
+.heart {
+  color: var(--danger-color);
+  font-size: var(--font-size-lg);
+}
+
+/* Game modes */
+.game-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  background-color: var(--light-color);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin: var(--spacing-md);
+  min-width: 80%;
+}
+
+/* Canvas for writing */
+.canvas-container {
+  border: 3px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  margin: var(--spacing-md) 0;
+  background-color: white;
+}
+
+/* Feedback animations */
+@keyframes success-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.success-animation {
+  animation: success-pulse 0.5s ease;
+}
+
+/* Animasi shake untuk jawaban salah */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.shake-animation {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Mobile warning */
+.mobile-warning {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--dark-color);
+  color: white;
+  text-align: center;
+  padding: var(--spacing-xl);
+  z-index: 1000;
+  font-size: var(--font-size-lg);
+}
+
+/* Media query to show mobile warning on small screens */
+@media (max-width: 768px) {
+  .mobile-warning {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+/* Music controls */
+.music-controls {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 100;
+}
+
+.music-controls button {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.music-controls button:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Loading screen */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  width: 100%;
+}
+
+.loading-screen h2 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+/* Animasi loading sederhana */
+.loading-screen:after {
+  content: "";
+  width: 40px;
+  height: 40px;
+  border: 5px solid var(--primary-light-color);
+  border-top: 5px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error screen */
+.error-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  width: 100%;
+  text-align: center;
+  padding: 2rem;
+}
+
+.error-screen h2 {
+  color: var(--danger-color);
+  margin-bottom: 1rem;
+}
+
+.error-screen p {
+  margin-bottom: 2rem;
+}
+
+.error-screen button, 
+.error-screen a {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-size: 1.2rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* Splash Screen Styles */
+.splash-exit {
+  opacity: 1;
+}
+
+.splash-exit-active {
+  opacity: 0;
+  transition: opacity 500ms ease-out;
+}

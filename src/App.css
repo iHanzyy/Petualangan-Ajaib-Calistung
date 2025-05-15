@@ -1,0 +1,5 @@
+/* 
+ * This file imports all our styles from the styles directory.
+ * This makes it easier to organize and maintain the styles.
+ */
+@import './styles/App.css';
