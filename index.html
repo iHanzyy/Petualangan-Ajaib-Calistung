@@ -3,15 +3,45 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image" href="/images/logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Tambahkan meta tag untuk mencegah scaling pada mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="description" content="Petualangan Ajaib Calistung - Aplikasi Belajar Membaca, Menulis, dan Berhitung untuk Anak Berkebutuhan Khusus" />
     <title>Petualangan Ajaib Calistung</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+      /* CSS fallback untuk browser tanpa JavaScript - Kita akan mengandalkan React */
+      /*
+      @media (max-width: 768px) {
+        body::before {
+          content: "Game ini hanya dapat diakses dari perangkat desktop.";
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(-45deg, #ff7e5f, #feb47b, #7fc8f8, #7dcfb6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          color: white;
+          font-size: 1.2rem;
+          padding: 2rem;
+          z-index: 10000;
+        }
+      }
+      */
+    </style>
   </head>
   <body>
+    <noscript>
+      <div style="position:fixed; top:0; left:0; right:0; bottom:0; background:#ff7e5f; color:white; padding:2rem; display:flex; align-items:center; justify-content:center; text-align:center;">
+        Game ini membutuhkan JavaScript untuk berjalan. Mohon aktifkan JavaScript di browser Anda.
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

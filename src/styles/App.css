@@ -206,24 +206,6 @@ footer {
   animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
 
-/* Mobile warning - hanya perlu style dasar */
-.mobile-warning {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1000;
-}
-
-/* Media query to show mobile warning on small screens */
-@media (max-width: 768px) {
-  .mobile-warning {
-    display: block;
-  }
-}
-
 /* Music controls */
 .music-controls {
   position: fixed;
