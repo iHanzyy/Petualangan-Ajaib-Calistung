@@ -137,7 +137,7 @@ const useBackgroundMusic = () => {
     return isPlaying;
   };
 
-  return { playMusic, pauseMusic, setVolume, isMusicPlaying };
+  return { playMusic, pauseMusic, setVolume, isMusicPlaying, getMusicInstance: () => globalMusic };
 };
 
 export default useBackgroundMusic;

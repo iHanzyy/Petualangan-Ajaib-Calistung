@@ -250,9 +250,9 @@ const Writing = () => {
 
     return () => {
       document.removeEventListener('click', handleClick);
-      pauseMusic();
+      // Hapus pauseMusic() di sini
     };
-  }, [playMusic, pauseMusic]);
+  }, [playMusic]); // Hapus pauseMusic dari dependencies
   
   // Select a random target on component mount
   useEffect(() => {

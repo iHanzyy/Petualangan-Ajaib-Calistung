@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faVolumeHigh, faVolumeMute } from '@fortawesome/free-solid-svg-icons';
-import Howler from 'howler';
+import { Howl, Howler } from 'howler'; // Import keduanya untuk akses yang benar
 import useBackgroundMusic from '../../hooks/useBackgroundMusic';
 
 const SoundButton = styled.button`
@@ -36,41 +36,89 @@ const SoundButton = styled.button`
 const SoundControl = () => {
   const [isMuted, setIsMuted] = useState(false);
   const { playMusic, pauseMusic, isMusicPlaying } = useBackgroundMusic();
-
+  const wasMusicPlayingRef = useRef(false);
+  
+  // Check initial mute state on component mount
   useEffect(() => {
-    // Check if sound was previously muted
+    // Load mute state from localStorage
     const savedMuteState = localStorage.getItem('isMuted');
-    if (savedMuteState) {
-      const muted = JSON.parse(savedMuteState);
-      setIsMuted(muted);
-      if (Howler.ctx) {
-        Howler.volume(muted ? 0 : 1);
-      }
+    const muted = savedMuteState ? JSON.parse(savedMuteState) : false;
+    
+    setIsMuted(muted);
+    
+    // Apply mute state directly to Howler
+    if (muted) {
+      Howler.volume(0); // Gunakan sebagai method, bukan properti
       
-      // If muted, ensure background music is also paused
-      if (muted && isMusicPlaying()) {
-        pauseMusic();
-      } else if (!muted && localStorage.getItem('backgroundMusicPlaying') === 'true' && !isMusicPlaying()) {
-        playMusic();
+      // Save current music status for later
+      wasMusicPlayingRef.current = localStorage.getItem('backgroundMusicPlaying') === 'true';
+      
+      // If music should be playing but we're muted, update localStorage
+      if (wasMusicPlayingRef.current) {
+        localStorage.setItem('backgroundMusicWasPlaying', 'true');
+      }
+    } else {
+      Howler.volume(1); // Gunakan sebagai method, bukan properti
+      
+      // Check if music should be playing
+      const musicShouldPlay = localStorage.getItem('backgroundMusicPlaying') === 'true';
+      if (musicShouldPlay && !isMusicPlaying()) {
+        // Small delay to ensure context is ready
+        setTimeout(() => {
+          playMusic();
+        }, 100);
       }
     }
-  }, [pauseMusic, playMusic, isMusicPlaying]);
+  }, [playMusic, isMusicPlaying]);
 
   const toggleMute = () => {
     const newMuteState = !isMuted;
+    
+    // Update UI state
     setIsMuted(newMuteState);
-    if (Howler.ctx) {
-      Howler.volume(newMuteState ? 0 : 1);
-    }
     
-    // Handle background music
     if (newMuteState) {
-      pauseMusic();
-    } else if (localStorage.getItem('backgroundMusicPlaying') === 'true') {
-      playMusic();
+      // MUTE: Save current state and mute
+      
+      // Check if music is currently playing before muting
+      const musicIsCurrentlyPlaying = isMusicPlaying();
+      wasMusicPlayingRef.current = musicIsCurrentlyPlaying;
+      
+      // Store the fact that music was playing
+      if (musicIsCurrentlyPlaying) {
+        localStorage.setItem('backgroundMusicWasPlaying', 'true');
+      }
+      
+      // Mute the sound (but don't pause the music)
+      Howler.volume(0); // Gunakan sebagai method, bukan properti
+      console.log("Sound is now muted, music state:", musicIsCurrentlyPlaying);
+    } else {
+      // UNMUTE: Restore previous state
+      
+      // Restore volume
+      Howler.volume(1); // Gunakan sebagai method, bukan properti
+      
+      // Check if music was playing before mute
+      const musicWasPlaying = wasMusicPlayingRef.current || 
+                             localStorage.getItem('backgroundMusicWasPlaying') === 'true';
+      
+      if (musicWasPlaying) {
+        // Clear the flag
+        localStorage.removeItem('backgroundMusicWasPlaying');
+        
+        // If music should be playing but isn't, start it
+        if (!isMusicPlaying()) {
+          console.log("Resuming music after unmute");
+          setTimeout(() => {
+            playMusic();
+          }, 100);
+        }
+      }
+      
+      console.log("Sound is now unmuted, restoring music:", musicWasPlaying);
     }
     
-    // Save state to localStorage
+    // Save mute state to localStorage
     localStorage.setItem('isMuted', JSON.stringify(newMuteState));
   };
 
@@ -85,4 +133,4 @@ const SoundControl = () => {
   );
 };
 
-export default SoundControl; 
+export default SoundControl;

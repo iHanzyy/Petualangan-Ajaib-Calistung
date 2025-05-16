@@ -3,29 +3,26 @@ import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome } from '@fortawesome/free-solid-svg-icons';
+import useAudio from '../../hooks/useAudio';
 
 const StyledHomeButton = styled(Link)`
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--primary-color);
-  color: white;
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  font-size: 1.5rem;
-  text-decoration: none;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 1.3rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
-  z-index: 10;
+  border: none;
+  text-decoration: none;
   
   &:hover {
     transform: scale(1.1);
     background-color: #0069d9;
-    text-decoration: none;
   }
   
   &:active {
@@ -34,14 +31,25 @@ const StyledHomeButton = styled(Link)`
 `;
 
 /**
- * HomeButton component - A button to navigate back to the home screen
+ * HomeButton component - A button to navigate back to the menu screen
  * 
  * @returns {JSX.Element} - Rendered component
  */
-const HomeButton = () => {
+const HomeButton = ({ showText = false }) => {
+  const { play } = useAudio({
+    click: '/sounds/click-button.mp3'
+  });
+  
+  const handleClick = () => {
+    play('click');
+    // Penting: TIDAK memanggil pauseMusic() di sini
+    // Kita hanya perlu memastikan bahwa status musik disimpan di localStorage
+  };
+  
   return (
-    <StyledHomeButton to="/menu" aria-label="Kembali ke Menu Utama">
+    <StyledHomeButton to="/menu" onClick={handleClick} aria-label="Kembali ke menu utama">
       <FontAwesomeIcon icon={faHome} />
+      {showText && <span style={{ marginLeft: '0.5rem' }}>Kembali ke Menu</span>}
     </StyledHomeButton>
   );
 };

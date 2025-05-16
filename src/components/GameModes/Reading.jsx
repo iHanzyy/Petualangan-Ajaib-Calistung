@@ -232,9 +232,8 @@ const Reading = () => {
 
     return () => {
       document.removeEventListener('click', handleClick);
-      pauseMusic();
     };
-  }, [playMusic, pauseMusic]);
+  }, [playMusic]);
   
   // Select a random word on component mount
   useEffect(() => {
