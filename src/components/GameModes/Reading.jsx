@@ -2,14 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone, faVolumeUp, faSync } from '@fortawesome/free-solid-svg-icons';
+import Howler from 'howler';
 
 import HomeButton from '../UI/HomeButton';
 import HeartDisplay from '../UI/HeartDisplay';
 import FeedbackModal from '../UI/FeedbackModal';
+import SoundControl from '../UI/SoundControl';
 
 import useTextToSpeech from '../../hooks/useTextToSpeech';
 import useSpeechRecognition from '../../hooks/useSpeechRecognition';
 import useAudio from '../../hooks/useAudio';
+import useBackgroundMusic from '../../hooks/useBackgroundMusic';
 
 // Sample words for the reading game (Indonesian)
 const SAMPLE_WORDS = [
@@ -44,7 +47,7 @@ const GameContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0);
     z-index: 0;
   }
   
@@ -207,8 +210,31 @@ const Reading = () => {
   const { play } = useAudio({
     correct: '/sounds/correct.mp3',
     wrong: '/sounds/wrong.mp3',
-    gameOver: '/sounds/game-over.mp3'
+    click: '/sounds/click-button.mp3'
   });
+  const { playMusic, pauseMusic } = useBackgroundMusic();
+  
+  // Initialize audio context and background music
+  useEffect(() => {
+    const initializeAudio = () => {
+      if (Howler.ctx && Howler.ctx.state === 'suspended') {
+        Howler.ctx.resume();
+      }
+      playMusic();
+    };
+
+    // Add click listener to initialize audio
+    const handleClick = () => {
+      initializeAudio();
+      document.removeEventListener('click', handleClick);
+    };
+    document.addEventListener('click', handleClick);
+
+    return () => {
+      document.removeEventListener('click', handleClick);
+      pauseMusic();
+    };
+  }, [playMusic, pauseMusic]);
   
   // Select a random word on component mount
   useEffect(() => {
@@ -245,44 +271,28 @@ const Reading = () => {
   
   // Check if the user's response matches the current word
   const checkAnswer = () => {
-    if (!transcript) return;
+    const normalizedTranscript = transcript.toLowerCase().trim();
+    const normalizedWord = currentWord.toLowerCase().trim();
+    const isCorrect = normalizedTranscript === normalizedWord;
     
-    // Case insensitive comparison
-    const isAnswerCorrect = 
-      transcript.trim().toLowerCase() === currentWord.toLowerCase();
+    setIsCorrect(isCorrect);
     
-    setIsCorrect(isAnswerCorrect);
-    
-    try {
-      if (isAnswerCorrect) {
-        play('correct');
-        setScore(prevScore => prevScore + 10);
-        setModalWord(currentWord);
-        setModalImage(getWordImagePath(currentWord));
+    if (isCorrect) {
+      play('correct');
+      setModalWord(currentWord);
+      setModalImage(getWordImagePath(currentWord));
+      setTimeout(() => {
         setShowNextModal(true);
-      } else {
-        play('wrong');
-        
-        // Tambahkan efek getar pada TranscriptDisplay
-        const transcriptElement = document.querySelector('.transcript-display');
-        if (transcriptElement) {
-          transcriptElement.classList.add('shake-animation');
-          setTimeout(() => {
-            transcriptElement.classList.remove('shake-animation');
-          }, 500);
-        }
-        
-        setLives(prevLives => prevLives - 1);
-        
-        if (lives <= 1) {
-          setTimeout(() => {
-            play('gameOver');
-            setGameOver(true);
-          }, 500);
-        }
+      }, 800);
+    } else {
+      play('wrong');
+      setLives(prevLives => prevLives - 1);
+      
+      if (lives <= 1) {
+        setTimeout(() => {
+          setGameOver(true);
+        }, 1000);
       }
-    } catch (e) {
-      console.error("Error playing sound:", e);
     }
   };
   
@@ -365,6 +375,8 @@ const Reading = () => {
           </StatusText>
         )}
       </GameContainer>
+
+      <SoundControl />
 
       {/* Success Modal with dynamic image based on current word */}
       <FeedbackModal

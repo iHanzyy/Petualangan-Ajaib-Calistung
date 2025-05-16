@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import '../styles/SplashScreen.css';
+import useBackgroundMusic from '../../hooks/useBackgroundMusic';
+import { Howler } from 'howler';
 
 // Animasi untuk karakter melompat
 const bounce = keyframes`
@@ -112,8 +114,25 @@ const LoadingDots = styled.span`
 const SplashScreen = () => {
   const navigate = useNavigate();
   const [showLoadingText, setShowLoadingText] = useState(false);
+  const { isMusicPlaying, playMusic } = useBackgroundMusic();
   
   useEffect(() => {
+    // Ensure music is playing when entering SplashScreen
+    if (localStorage.getItem('backgroundMusicPlaying') === 'true' && !isMusicPlaying()) {
+      // Small delay to ensure context is ready
+      setTimeout(() => {
+        if (Howler.ctx && Howler.ctx.state === 'suspended') {
+          Howler.ctx.resume().then(() => {
+            playMusic();
+            console.log('Music continued in SplashScreen after context resume');
+          });
+        } else {
+          playMusic();
+          console.log('Music continued in SplashScreen');
+        }
+      }, 100);
+    }
+    
     // Show loading text after 1 second
     const loadingTimer = setTimeout(() => {
       setShowLoadingText(true);
@@ -129,7 +148,7 @@ const SplashScreen = () => {
       clearTimeout(loadingTimer);
       clearTimeout(navigationTimer);
     };
-  }, [navigate]);
+  }, [navigate, playMusic, isMusicPlaying]);
   
   // Array of characters for the bouncing animation
   const characters = ['📚', '✏️', '🔢'];

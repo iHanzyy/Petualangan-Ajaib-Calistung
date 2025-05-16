@@ -6,6 +6,7 @@ import { faRedo, faVolumeUp } from '@fortawesome/free-solid-svg-icons';
 import HomeButton from '../UI/HomeButton';
 import HeartDisplay from '../UI/HeartDisplay';
 import FeedbackModal from '../UI/FeedbackModal';
+import SoundControl from '../UI/SoundControl'; // Tambahkan import SoundControl
 
 import useAudio from '../../hooks/useAudio';
 import useTextToSpeech from '../../hooks/useTextToSpeech';
@@ -75,11 +76,11 @@ const GameContainer = styled.div`
   justify-content: flex-start;
   padding: 1rem;
   position: relative;
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
   background: url('/images/background-berhitung.png') no-repeat center center fixed;
   background-size: cover;
-  overflow: hidden;
+  overflow-y: auto;
   
   &::before {
     content: '';
@@ -88,7 +89,7 @@ const GameContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0);
     z-index: 0;
   }
   
@@ -104,7 +105,7 @@ const HeaderContainer = styled.div`
   align-items: center;
   width: 100%;
   padding: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   position: relative;
 `;
 
@@ -122,14 +123,19 @@ const Title = styled.h1`
 
 const ProblemDisplay = styled.div`
   font-size: 3rem;
-  margin: 2rem 0;
-  padding: 2rem 4rem;
+  margin: 1rem 0;
+  padding: 1.5rem 2rem;
   background-color: white;
   border-radius: var(--border-radius);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  min-width: 300px;
   text-align: center;
   transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: nowrap;
+  width: fit-content;
   
   &:hover {
     transform: scale(1.05);
@@ -138,22 +144,32 @@ const ProblemDisplay = styled.div`
 
 const ObjectsContainer = styled.div`
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
   justify-content: center;
+  align-items: center;
   gap: 1.5rem;
-  margin: 2rem 0;
-  padding: 1.5rem;
+  margin: 1rem 0;
+  padding: 1.5rem 2rem;
   background-color: rgba(255, 255, 255, 0.9);
   border-radius: var(--border-radius);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
+  min-height: 120px;
+  flex-wrap: nowrap;
+  width: fit-content;
 `;
 
-const ObjectImage = styled.img`
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
+const ObjectWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
+  flex-shrink: 0;
   
   &:hover {
     transform: scale(1.1);
@@ -161,47 +177,67 @@ const ObjectImage = styled.img`
 `;
 
 const AnswerContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  margin: 2rem 0;
-  padding: 1.5rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+  padding: 1.5rem 2rem;
   background-color: rgba(255, 255, 255, 0.9);
   border-radius: var(--border-radius);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex-wrap: nowrap;
+  width: fit-content;
 `;
 
 const AnswerButton = styled.button`
-  font-size: 2.5rem;
-  padding: 1.5rem 2rem;
-  background-color: var(--light-color);
+  font-size: 2.8rem;
+  font-weight: bold;
+  padding: 1.2rem;
+  background-color: white;
   border: 3px solid var(--secondary-color);
-  border-radius: var(--border-radius);
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+  flex-shrink: 0;
   
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.1);
     background-color: var(--secondary-color);
     color: white;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
   }
   
   &:active {
     transform: scale(0.95);
   }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
 `;
 
 const OperationSymbol = styled.span`
   font-size: 3rem;
-  margin: 0 1.5rem;
   color: var(--primary-color);
+  flex-shrink: 0;
+  margin: 0 0.5rem;
 `;
 
 const EqualsSymbol = styled.span`
   font-size: 3rem;
-  margin: 0 1.5rem;
   color: var(--primary-color);
+  flex-shrink: 0;
+  margin: 0 0.5rem;
 `;
 
 const QuestionMark = styled.div`
@@ -232,32 +268,42 @@ const Score = styled.div`
 `;
 
 const SpeechButton = styled.button`
-  position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
-  background-color: var(--primary-color);
+  background-color: var(--secondary-color);
   color: white;
   border: none;
   border-radius: 50%;
   width: 4rem;
   height: 4rem;
-  font-size: 2rem;
+  font-size: 1.8rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 2;
+  margin: 1rem auto;
   
   &:hover {
     transform: scale(1.1);
-    background-color: var(--secondary-color);
+    
   }
   
   &:active {
     transform: scale(0.95);
   }
+`;
+
+const ModalContainer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.5);
 `;
 
 // Fungsi untuk merender objek emoji
@@ -267,15 +313,21 @@ const renderObjects = (count, emoji) => {
   // Batasi jumlah objek yang dirender untuk performa
   if (count > MAX_OBJECTS_RENDERED) {
     return (
-      <span role="presentation" aria-hidden="true">{emoji} × {count}</span>
+      <ObjectWrapper role="presentation" aria-hidden="true">
+        {emoji} × {count}
+      </ObjectWrapper>
     );
   }
   
   return Array(count).fill(0).map((_, index) => (
-    <span key={`${emoji}-${index}`} role="presentation" aria-hidden="true">
+    <ObjectWrapper key={`${emoji}-${index}`} role="presentation" aria-hidden="true">
       {emoji}
-    </span>
+    </ObjectWrapper>
   ));
+};
+
+const getOperationText = (operation) => {
+  return operation === '+' ? 'ditambah' : 'dikurang';
 };
 
 /**
@@ -455,90 +507,102 @@ const Counting = () => {
 
   // Main render
   return (
-    <GameContainer>
-      <HeaderContainer>
-        <HomeButton />
-        <Score>Skor: {score}</Score>
-      </HeaderContainer>
-      
-      <HeartDisplay lives={lives} />
-      
-      {/* Only render objects if problem is defined */}
-      {problem && problem.objectType && (
-        <ObjectsContainer>
-          {renderObjects(problem.a, problem.objectType)}
-          <OperationSymbol>{problem.operation}</OperationSymbol>
-          {renderObjects(problem.b, problem.objectType)}
-        </ObjectsContainer>
-      )}
-      
-      <ProblemDisplay>
-        <span>{problem?.a || 0}</span>
-        <OperationSymbol>{problem?.operation || '+'}</OperationSymbol>
-        <span>{problem?.b || 0}</span>
-        <EqualsSymbol>=</EqualsSymbol>
-        <QuestionMark>?</QuestionMark>
-      </ProblemDisplay>
-      
-      <AnswerContainer ref={answerContainerRef} className="answer-container">
-        {answerOptions.map((answer, index) => (
-          <AnswerButton
-            key={index}
-            onClick={() => checkAnswer(answer)}
-          >
-            {answer}
-          </AnswerButton>
-        ))}
-      </AnswerContainer>
-      
-      {/* Accessibility button to read problem */}
-      <SpeechButton 
-        onClick={() => speak(`${problem?.a || 0} ${problem?.operation || '+'} ${problem?.b || 0} sama dengan berapa?`)} 
-        aria-label="Bacakan soal"
-      >
-        <FontAwesomeIcon icon={faVolumeUp} /> Dengarkan Soal
-      </SpeechButton>
+    <>
+      <GameContainer>
+        <HeaderContainer>
+          <HomeButton />
+          <Score>Skor: {score}</Score>
+        </HeaderContainer>
+        
+        <HeartDisplay lives={lives} />
+        
+        {problem && problem.objectType && (
+          <ObjectsContainer>
+            {renderObjects(problem.a, problem.objectType)}
+            <OperationSymbol>{problem.operation}</OperationSymbol>
+            {renderObjects(problem.b, problem.objectType)}
+          </ObjectsContainer>
+        )}
+        
+        <ProblemDisplay>
+          <span>{problem?.a || 0}</span>
+          <OperationSymbol>{problem?.operation || '+'}</OperationSymbol>
+          <span>{problem?.b || 0}</span>
+          <EqualsSymbol>=</EqualsSymbol>
+          <span>?</span>
+        </ProblemDisplay>
+        
+        <AnswerContainer ref={answerContainerRef} className="answer-container">
+          {answerOptions.map((answer, index) => (
+            <AnswerButton
+              key={index}
+              onClick={() => checkAnswer(answer)}
+              disabled={selectedAnswer !== null}
+            >
+              {answer}
+            </AnswerButton>
+          ))}
+        </AnswerContainer>
+
+        <SpeechButton 
+          onClick={() => speak(`${problem?.a || 0} ${getOperationText(problem?.operation || '+')} ${problem?.b || 0} sama dengan berapa?`)} 
+          aria-label="Bacakan soal"
+        >
+          <FontAwesomeIcon icon={faVolumeUp} />
+        </SpeechButton>
+      </GameContainer>
+
+      {/* Tambahkan SoundControl di luar GameContainer */}
+      <SoundControl />
       
       {/* Success Modal */}
-      <FeedbackModal
-        isVisible={showNextModal}
-        isSuccess={true}
-        title="Hebat!"
-        message={`Kamu berhasil menjawab dengan benar. Jawabannya adalah ${problem.result}. Lanjutkan ke soal berikutnya?`}
-        imageSrc="/images/success.png"
-        onClose={() => {
-          setShowNextModal(false);
-          generateNewProblem();
-        }}
-        onAction={() => {
-          setShowNextModal(false);
-          generateNewProblem();
-        }}
-        actionText="Lanjutkan"
-      />
+      {showNextModal && (
+        <ModalContainer>
+          <FeedbackModal
+            isVisible={showNextModal}
+            isSuccess={true}
+            title="Hebat!"
+            message={`Kamu berhasil menjawab dengan benar. Jawabannya adalah ${problem.result}. Lanjutkan ke soal berikutnya?`}
+            imageSrc="/images/success.png"
+            onClose={() => {
+              setShowNextModal(false);
+              generateNewProblem();
+            }}
+            onAction={() => {
+              setShowNextModal(false);
+              generateNewProblem();
+            }}
+            actionText="Lanjutkan"
+          />
+        </ModalContainer>
+      )}
       
       {/* Game Over Modal */}
-      <FeedbackModal
-        isVisible={gameOver}
-        isSuccess={false}
-        title="Permainan Selesai"
-        message={`Skor akhir kamu: ${score}. Mau coba lagi?`}
-        imageSrc="/images/game-over.png"
-        onClose={() => {
-          setLives(3);
-          setScore(0);
-          setGameOver(false);
-          generateNewProblem();
-        }}
-        onAction={() => {
-          setLives(3);
-          setScore(0);
-          setGameOver(false);
-          generateNewProblem();
-        }}
-        actionText="Main Lagi"
-      />
-    </GameContainer>
+      {gameOver && (
+        <ModalContainer>
+          <FeedbackModal
+            isVisible={gameOver}
+            isSuccess={false}
+            title="Permainan Selesai"
+            message={`Skor akhir kamu: ${score}. Mau coba lagi?`}
+            imageSrc="/images/game-over.png"
+            onClose={() => {
+              setLives(3);
+              setScore(0);
+              setGameOver(false);
+              generateNewProblem();
+            }}
+            onAction={() => {
+              setLives(3);
+              setScore(0);
+              setGameOver(false);
+              generateNewProblem();
+            }}
+            actionText="Main Lagi"
+          />
+        </ModalContainer>
+      )}
+    </>
   );
 };
 

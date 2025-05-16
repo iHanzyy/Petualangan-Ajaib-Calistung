@@ -7,7 +7,7 @@ import { Howl, Howler } from 'howler';
  * @param {Object} sounds - Object with keys as sound names and values as file paths
  * @returns {Object} - Object containing play function to trigger sounds
  */
-const useAudio = (sounds) => {
+const useAudio = (sounds = {}) => {
   const soundsRef = useRef({});
   const playingRef = useRef([]);
   const [isAudioReady, setIsAudioReady] = useState(false);
@@ -48,7 +48,7 @@ const useAudio = (sounds) => {
                 }
               },
               onloaderror: (id, err) => {
-                console.warn(`Error loading sound ${name}:`, err);
+                console.error(`Error loading sound ${name}:`, err);
                 if (isMounted) {
                   // Retry loading after a delay
                   setTimeout(() => {

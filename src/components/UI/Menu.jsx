@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBook, faPencilAlt, faCalculator, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import SoundControl from './SoundControl';
+import useBackgroundMusic from '../../hooks/useBackgroundMusic';
+import { Howler } from 'howler';
 
 // Animasi untuk judul
 const bounce = keyframes`
@@ -18,12 +21,7 @@ const rainbow = keyframes`
   100% { color: #FF5757; }
 `;
 
-const float = keyframes`
-  0% { transform: translateY(0px) rotate(0deg); }
-  33% { transform: translateY(-10px) rotate(2deg); }
-  66% { transform: translateY(5px) rotate(-2deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-`;
+// Animation keyframes defined above
 
 // Animasi untuk sparkles
 const sparkle = keyframes`
@@ -163,7 +161,28 @@ const AnimatedLetter = styled.span`
  * @returns {JSX.Element} Rendered component
  */
 const Menu = () => {
+  // Using title constant for the animated text
   const title = "PETUALANGAN AJAIB CALISTUNG";
+  const { playMusic, isMusicPlaying } = useBackgroundMusic();
+  
+  // Ensure music is still playing when menu loads
+  useEffect(() => {
+    // Check if music should be playing
+    if (localStorage.getItem('backgroundMusicPlaying') === 'true' && !isMusicPlaying()) {
+      // Small delay to ensure context is ready
+      setTimeout(() => {
+        if (Howler.ctx && Howler.ctx.state === 'suspended') {
+          Howler.ctx.resume().then(() => {
+            playMusic();
+            console.log('Music continued in Menu after context resume');
+          });
+        } else {
+          playMusic();
+          console.log('Music continued in Menu');
+        }
+      }, 100);
+    }
+  }, [playMusic, isMusicPlaying]);
   
   return (
     <MenuContainer>
@@ -200,6 +219,7 @@ const Menu = () => {
           Tentang Permainan
         </MenuButton>
       </ButtonsContainer>
+      <SoundControl />
     </MenuContainer>
   );
 };

@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEraser, faRedo, faCheck } from '@fortawesome/free-solid-svg-icons';
+import Howler from 'howler';
 
 import HomeButton from '../UI/HomeButton';
 import HeartDisplay from '../UI/HeartDisplay';
 import FeedbackModal from '../UI/FeedbackModal';
+import SoundControl from '../UI/SoundControl';
 
 import useHandwriting from '../../hooks/useHandwriting';
 import useAudio from '../../hooks/useAudio';
+import useBackgroundMusic from '../../hooks/useBackgroundMusic';
 
 // Sample targets for the writing game (letters and numbers)
 const SAMPLE_TARGETS = [
@@ -25,11 +28,11 @@ const GameContainer = styled.div`
   justify-content: flex-start;
   padding: 1rem;
   position: relative;
-  height: 100vh;
+  height: 100vh; /* Ubah dari min-height ke height untuk menghindari scrolling */
   width: 100%;
   background: url('/images/background-menulis.png') no-repeat center center fixed;
   background-size: cover;
-  overflow: hidden;
+  overflow: hidden; /* Konsisten dengan Reading */
   
   &::before {
     content: '';
@@ -38,7 +41,7 @@ const GameContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0); /* Hapus overlay putih */
     z-index: 0;
   }
   
@@ -48,14 +51,28 @@ const GameContainer = styled.div`
   }
 `;
 
+const ModalContainer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.5);
+`;
+
 const HeaderContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.5rem; /* Sesuaikan padding */
   margin-bottom: 1rem;
   position: relative;
+  /* Hapus background, border radius dan shadow untuk konsisten dengan mode lain */
 `;
 
 const Title = styled.h1`
@@ -71,15 +88,15 @@ const Title = styled.h1`
 `;
 
 const TargetDisplay = styled.div`
-  font-size: 5rem;
-  margin: 2rem 0;
-  padding: 2rem 4rem;
+  font-size: 3rem;
+  margin: 0.5rem 0; /* Ubah dari 1rem menjadi 0.5rem */
+  padding: 1rem 3rem; /* Kurangi padding vertikal dari 1.5rem menjadi 1rem */
   background-color: white;
   border-radius: var(--border-radius);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  min-width: 200px;
   text-align: center;
   transition: transform 0.3s ease;
+  max-width: 90%;
   
   &:hover {
     transform: scale(1.05);
@@ -87,12 +104,13 @@ const TargetDisplay = styled.div`
 `;
 
 const CanvasContainer = styled.div`
-  margin: 2rem 0;
-  position: relative;
-  background-color: white;
-  padding: 1rem;
+  margin: 0.8rem 0; /* Kurangi dari 1.5rem menjadi 0.8rem */
+  padding: 1rem 2rem; /* Kurangi padding vertikal dari 1.5rem menjadi 1rem */
+  background-color: rgba(255, 255, 255, 0.9);
   border-radius: var(--border-radius);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: fit-content;
+  max-width: 90%;
 `;
 
 const DrawingCanvas = styled.canvas`
@@ -103,8 +121,8 @@ const DrawingCanvas = styled.canvas`
   touch-action: none;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
-  width: 300px;
-  height: 300px;
+  width: 220px; /* Kurangi ukuran dari 250px */
+  height: 220px; /* Kurangi ukuran dari 250px */
   
   &:hover {
     transform: scale(1.02);
@@ -113,19 +131,26 @@ const DrawingCanvas = styled.canvas`
 
 const ControlsContainer = styled.div`
   display: flex;
-  gap: 2rem;
-  margin: 2rem 0;
+  gap: 1.5rem;
+  margin: 0.8rem 0; /* Kurangi dari 1.5rem menjadi 0.8rem */
+  padding: 1rem 2rem; /* Kurangi padding vertikal dari 1.5rem menjadi 1rem */
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
   justify-content: center;
+  width: fit-content;
+  max-width: 90%;
 `;
 
 const IconButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 5rem;
-  height: 5rem;
+  width: 4rem;
+  height: 4rem;
   border-radius: 50%;
-  font-size: 2rem;
+  font-size: 1.5rem;
   background-color: ${props => props.color || 'var(--primary-color)'};
   color: white;
   border: none;
@@ -144,13 +169,13 @@ const IconButton = styled.button`
 `;
 
 const Instructions = styled.p`
-  font-size: 1.5rem;
-  margin: 1rem 0;
+  font-size: 1.3rem; /* Kurangi dari 1.5rem untuk menghemat ruang */
+  margin: 0.5rem 0; /* Kurangi dari 1rem menjadi 0.5rem */
   text-align: center;
   max-width: 600px;
   color: var(--dark-color);
   background-color: rgba(255, 255, 255, 0.9);
-  padding: 1rem 2rem;
+  padding: 0.7rem 2rem; /* Kurangi padding vertikal */
   border-radius: var(--border-radius);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
@@ -179,11 +204,11 @@ const Writing = () => {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [showNextModal, setShowNextModal] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
   
   // Custom hooks
   const {
     canvasRef,
-    isDrawing,
     hasDrawn,
     startDrawing,
     draw,
@@ -200,9 +225,34 @@ const Writing = () => {
   const { play } = useAudio({
     correct: '/sounds/correct.mp3',
     wrong: '/sounds/wrong.mp3',
-    gameOver: '/sounds/game-over.mp3',
-    clear: '/sounds/erase.mp3'
+    click: '/sounds/click-button.mp3'
   });
+  const { playMusic, pauseMusic } = useBackgroundMusic();
+  
+  // Initialize audio context and background music
+  useEffect(() => {
+    const initializeAudio = () => {
+      if (Howler.ctx && Howler.ctx.state === 'suspended') {
+        Howler.ctx.resume();
+      }
+      playMusic();
+    };
+
+    // Add click listener to initialize audio
+    const handleClick = () => {
+      initializeAudio();
+      document.removeEventListener('click', handleClick);
+    };
+    document.addEventListener('click', handleClick);
+
+    // Initialize audio on mount
+    initializeAudio();
+
+    return () => {
+      document.removeEventListener('click', handleClick);
+      pauseMusic();
+    };
+  }, [playMusic, pauseMusic]);
   
   // Select a random target on component mount
   useEffect(() => {
@@ -243,49 +293,26 @@ const Writing = () => {
     const randomIndex = Math.floor(Math.random() * SAMPLE_TARGETS.length);
     setCurrentTarget(SAMPLE_TARGETS[randomIndex]);
     clearCanvas();
-  };
-  
-  // Handle canvas clearing
-  const handleClearCanvas = () => {
-    clearCanvas();
-    play('clear');
+    setIsCorrect(false);
   };
   
   // Check if the drawn input matches the target
   const checkAnswer = () => {
     if (!hasDrawn) return;
     
-    // Compare the drawn input with the target
-    const { isMatch } = compareToTarget(currentTarget);
+    const isDrawingCorrect = compareToTarget();
+    setIsCorrect(isDrawingCorrect);
     
-    try {
-      if (isMatch) {
-        play('correct'); // Mainkan suara benar langsung
-        setScore(prevScore => prevScore + 10);
-        setShowNextModal(true);
-      } else {
-        play('wrong'); // Mainkan suara salah langsung
-
-        // Tambahkan efek getar pada canvas
-        const canvas = canvasRef.current;
-        if (canvas) {
-          canvas.classList.add('shake-animation');
-          setTimeout(() => {
-            canvas.classList.remove('shake-animation');
-          }, 500);
-        }
-
-        setLives(prevLives => prevLives - 1);
-
-        if (lives <= 1) {
-          setTimeout(() => {
-            play('gameOver');
-            setGameOver(true);
-          }, 500);
-        }
+    if (isDrawingCorrect) {
+      play('correct');
+      setScore(prev => prev + 10);
+      setShowNextModal(true);
+    } else {
+      play('wrong');
+      setLives(prev => prev - 1);
+      if (lives <= 1) {
+        setGameOver(true);
       }
-    } catch (e) {
-      console.error("Error playing sound:", e);
     }
   };
   
@@ -297,87 +324,101 @@ const Writing = () => {
   
   // Restart the game
   const restartGame = () => {
-    setLives(3);
     setScore(0);
+    setLives(3);
     setGameOver(false);
+    setShowNextModal(false);
     selectRandomTarget();
   };
   
   return (
-    <GameContainer>
-      <HeaderContainer>
-        <HomeButton />
-        <Score>Skor: {score}</Score>
-      </HeaderContainer>
-      
-      <HeartDisplay lives={lives} />
-      
-      <Instructions>
-        Tuliskan huruf atau angka berikut pada papan menulis di bawah.
-      </Instructions>
-      
-      <TargetDisplay>{currentTarget}</TargetDisplay>
-      
-      <CanvasContainer>
-        <DrawingCanvas 
-          ref={canvasRef} 
-          width={300} 
-          height={300} 
-          aria-label="Papan menulis"
-        />
-      </CanvasContainer>
-      
-      <ControlsContainer>
-        <IconButton 
-          onClick={handleClearCanvas} 
-          color="var(--danger-color)"
-          aria-label="Hapus"
-        >
-          <FontAwesomeIcon icon={faEraser} />
-        </IconButton>
+    <>
+      <GameContainer>
+        <HeaderContainer>
+          <HomeButton />
+          <Score>Skor: {score}</Score>
+        </HeaderContainer>
         
-        <IconButton 
-          onClick={selectRandomTarget} 
-          color="var(--warning-color)"
-          aria-label="Ganti huruf/angka"
-        >
-          <FontAwesomeIcon icon={faRedo} />
-        </IconButton>
+        <HeartDisplay lives={lives} />
         
-        <IconButton 
-          onClick={checkAnswer} 
-          disabled={!hasDrawn}
-          color="var(--success-color)"
-          aria-label="Periksa jawaban"
-        >
-          <FontAwesomeIcon icon={faCheck} />
-        </IconButton>
-      </ControlsContainer>
+        <Instructions>
+          Tulis huruf atau angka berikut dengan benar.
+        </Instructions>
+        
+        <TargetDisplay>{currentTarget}</TargetDisplay>
+        
+        <CanvasContainer>
+          <DrawingCanvas 
+            ref={canvasRef}
+            width={250} 
+            height={250} 
+            aria-label="Papan menulis"
+          />
+        </CanvasContainer>
+        
+        <ControlsContainer>
+          <IconButton 
+            onClick={clearCanvas}
+            color="var(--danger-color)"
+            aria-label="Hapus"
+          >
+            <FontAwesomeIcon icon={faEraser} />
+          </IconButton>
+          
+          <IconButton 
+            onClick={selectRandomTarget}
+            color="var(--warning-color)"
+            aria-label="Ganti huruf/angka"
+          >
+            <FontAwesomeIcon icon={faRedo} />
+          </IconButton>
+          
+          <IconButton 
+            onClick={checkAnswer}
+            disabled={!hasDrawn}
+            color="var(--success-color)"
+            aria-label="Periksa jawaban"
+          >
+            <FontAwesomeIcon icon={faCheck} />
+          </IconButton>
+        </ControlsContainer>
+      </GameContainer>
       
-      {/* Success Modal */}
-      <FeedbackModal
-        isVisible={showNextModal}
-        isSuccess={true}
-        title="Hebat!"
-        message={`Kamu berhasil menulis '${currentTarget}' dengan benar. Lanjutkan ke huruf/angka berikutnya?`}
-        imageSrc="/images/success.png"
-        onClose={handleNextTarget}
-        onAction={handleNextTarget}
-        actionText="Lanjutkan"
-      />
+      {/* Pindahkan SoundControl ke luar GameContainer, konsisten dengan Reading.jsx */}
+      <SoundControl />
       
-      {/* Game Over Modal */}
-      <FeedbackModal
-        isVisible={gameOver}
-        isSuccess={false}
-        title="Permainan Selesai"
-        message={`Skor akhir kamu: ${score}. Mau coba lagi?`}
-        imageSrc="/images/game-over.png"
-        onClose={restartGame}
-        onAction={restartGame}
-        actionText="Main Lagi"
-      />
-    </GameContainer>
+      {showNextModal && (
+        <ModalContainer>
+          <FeedbackModal
+            isVisible={showNextModal}
+            isSuccess={isCorrect}
+            title={isCorrect ? "Hebat!" : "Coba Lagi"}
+            message={isCorrect 
+              ? `Kamu berhasil menulis huruf "${currentTarget}" dengan benar. Lanjutkan ke huruf berikutnya?` 
+              : "Tulisanmu belum tepat. Coba lagi ya!"}
+            imageSrc={isCorrect ? "/images/success.png" : "/images/try-again.png"}
+            onClose={() => setShowNextModal(false)}
+            onAction={handleNextTarget}
+            actionText="Huruf Berikutnya"
+          />
+        </ModalContainer>
+      )}
+
+      {gameOver && (
+        <ModalContainer>
+          <FeedbackModal
+            isVisible={gameOver}
+            isSuccess={false}
+            title="Permainan Selesai"
+            message={`Skor akhir kamu: ${score}. Mau coba lagi?`}
+            imageSrc="/images/game-over.png"
+            onClose={restartGame}
+            onAction={restartGame}
+            actionText="Main Lagi"
+          />
+        </ModalContainer>
+      )}
+    </>
   );
 };
 

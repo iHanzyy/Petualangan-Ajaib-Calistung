@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Howler from 'howler';
 import styled, { keyframes } from 'styled-components';
+import useBackgroundMusic from '../../hooks/useBackgroundMusic';
 
 // Animasi untuk karakter melompat
 const bounce = keyframes`
@@ -127,30 +128,80 @@ const StartButton = styled.button`
 
 const InitialScreen = () => {
   const navigate = useNavigate();
+  const { playMusic, isMusicPlaying } = useBackgroundMusic();
 
-  const handleStart = () => {
-    // Resume audio context on first interaction
-    if (Howler.ctx && Howler.ctx.state === 'suspended') {
-      Howler.ctx.resume();
-    }
-    // Navigate to splash screen after user interaction
-    navigate('/splash');
-  };
-
-  // Add touchstart listener for mobile
+  // Add touchstart listener for Howler AudioContext resume
   useEffect(() => {
-    const handleTouchStart = () => {
-      if (Howler.ctx && Howler.ctx.state !== 'running') {
-        Howler.ctx.resume();
+    const resumeAudio = () => {
+      if (Howler.ctx && Howler.ctx.state === 'suspended') {
+        Howler.ctx.resume().then(() => {
+          console.log('AudioContext resumed successfully by user interaction');
+          
+          // Check if music should be playing
+          const musicStatus = localStorage.getItem('backgroundMusicPlaying');
+          if (musicStatus === 'true' && !isMusicPlaying()) {
+            playMusic();
+          }
+        });
       }
     };
-
-    document.addEventListener('touchstart', handleTouchStart, { once: true });
+    
+    // Add event listeners for first user interaction
+    window.addEventListener('click', resumeAudio, { once: true });
+    window.addEventListener('touchstart', resumeAudio, { once: true });
     
     return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('click', resumeAudio);
+      window.removeEventListener('touchstart', resumeAudio);
     };
-  }, []);
+  }, [playMusic, isMusicPlaying]);
+  const handleStart = () => {
+    console.log("Start button clicked, attempting to play music");
+    
+    // Create an audio context manually if needed for some browsers
+    if (!Howler.ctx) {
+      console.log("No Howler context, this shouldn't happen but creating a fallback");
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        // Attach it to window to ensure it's not garbage collected
+        window._audioCtx = ctx;
+      }
+    }
+    
+    // Ensure audio context is running
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      console.log("Audio context suspended, attempting to resume");
+      
+      // Force user interaction to be registered
+      Howler.ctx.resume().then(() => {
+        console.log("Audio context resumed successfully");
+        // Play music after context is resumed
+        playMusic();
+        
+        // Add a little delay before navigating to ensure audio starts
+        setTimeout(() => {
+          navigate('/splash');
+        }, 300); // Longer delay to ensure audio starts
+      }).catch(err => {
+        console.error('Failed to resume audio context:', err);
+        // Try to play anyway then navigate
+        playMusic();
+        setTimeout(() => {
+          navigate('/splash');
+        }, 300);
+      });
+    } else {
+      // Play background music directly
+      console.log("Audio context ready, playing music directly");
+      playMusic();
+      
+      // Add a little delay before navigating to ensure audio starts
+      setTimeout(() => {
+        navigate('/splash');
+      }, 200);
+    }
+  };
 
   // Array of characters for the bouncing animation
   const characters = ['📚', '✏️', '🔢'];
@@ -188,4 +239,4 @@ const InitialScreen = () => {
   );
 };
 
-export default InitialScreen; 
+export default InitialScreen;

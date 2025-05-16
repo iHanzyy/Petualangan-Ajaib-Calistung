@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import './styles/App.css'
 import './styles/global.css'
@@ -15,8 +15,6 @@ import InitialScreen from './components/UI/InitialScreen'
 
 // Import custom hooks
 import useAudio from './hooks/useAudio'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faVolumeUp, faVolumeMute } from '@fortawesome/free-solid-svg-icons'
 
 // Import ErrorBoundary
 import { ErrorBoundary } from 'react-error-boundary';
@@ -38,12 +36,10 @@ const ErrorFallback = () => (
  * @returns {JSX.Element} - Rendered component
  */
 function App() {
-  const [isMuted, setIsMuted] = useState(false);
   const { play: playClick, isAudioReady } = useAudio({
     click: '/sounds/click-button.mp3',
     correct: '/sounds/correct.mp3',
-    wrong: '/sounds/wrong.mp3',
-    gameOver: '/sounds/game-over.mp3'
+    wrong: '/sounds/wrong.mp3'
   });
 
   // Check if device is mobile (small screen)
@@ -100,32 +96,8 @@ function App() {
     initializeAudio();
   }, []);
 
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    if (Howler.ctx) {
-      Howler.volume(isMuted ? 1 : 0);
-    }
-  };
-
   return (
     <Router>
-      {/* Music controls */}
-      <div className="music-controls">
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isAudioReady) {
-              playClick('click');
-            }
-            toggleMute();
-          }} 
-          aria-label={isMuted ? "Aktifkan musik" : "Matikan musik"}
-          title={isMuted ? "Aktifkan musik" : "Matikan musik"}
-        >
-          <FontAwesomeIcon icon={isMuted ? faVolumeMute : faVolumeUp} />
-        </button>
-      </div>
-      
       {/* Mobile warning message */}
       <div id="mobile-warning" className="mobile-warning">
         <h2>Peringatan Perangkat</h2>
@@ -144,7 +116,6 @@ function App() {
             <Counting />
           </ErrorBoundary>
         } />
-        
       </Routes>
     </Router>
   );

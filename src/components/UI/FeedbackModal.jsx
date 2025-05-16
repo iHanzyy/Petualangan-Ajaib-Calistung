@@ -111,7 +111,7 @@ const FeedbackModal = ({
   const { play } = useAudio({
     correct: '/sounds/correct.mp3',
     wrong: '/sounds/wrong.mp3',
-    gameOver: '/sounds/game-over.mp3'
+    click: '/sounds/click-button.mp3'
   });
   
   // Mainkan suara saat modal muncul
