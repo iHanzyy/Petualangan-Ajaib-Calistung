@@ -6,6 +6,7 @@ import { faBook, faPencilAlt, faCalculator, faInfoCircle } from '@fortawesome/fr
 import SoundControl from './SoundControl';
 import useBackgroundMusic from '../../hooks/useBackgroundMusic';
 import { Howler } from 'howler';
+import { motion } from 'framer-motion';
 
 // Animasi untuk judul
 const bounce = keyframes`
@@ -21,15 +22,13 @@ const rainbow = keyframes`
   100% { color: #FF5757; }
 `;
 
-// Animation keyframes defined above
-
 // Animasi untuk sparkles
 const sparkle = keyframes`
   0%, 100% { opacity: 0; transform: scale(0.5); }
   50% { opacity: 1; transform: scale(1.2); }
 `;
 
-// Styled components for more engaging UI
+// Styled components for UI
 const MenuContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -38,7 +37,7 @@ const MenuContainer = styled.div`
   gap: 2rem;
   padding: 2rem;
   min-height: 100vh;
-  background-image: url('images/background-menu.png'); /* Replace with your background image */
+  background-image: url('images/background-menu.png'); 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -51,12 +50,11 @@ const MenuContainer = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0); /* Semi-transparent overlay for better text readability */
+    background-color: rgba(255, 255, 255, 0);
     z-index: 0;
   }
 `;
 
-// Meningkatkan kontras untuk title, subtitle, dan button container
 const Title = styled.h1`
   font-family: 'Cal Sans', sans-serif;
   font-size: 4rem;
@@ -119,29 +117,25 @@ const ButtonsContainer = styled.div`
   z-index: 1;
 `;
 
-const MenuButton = styled(Link)`
+// Perbaikan: Gunakan styled(motion.a) alih-alih motion(Link) untuk menghindari masalah kompatibilitas
+const MenuButton = styled(motion.div)`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1rem;
-  padding: 1rem 2rem;
-  font-size: 1.8rem;
+  padding: 1.2rem 2rem;
   background-color: ${props => props.color || 'var(--primary-color)'};
   color: white;
-  border-radius: var(--border-radius);
+  border-radius: 1rem;
+  font-size: 1.5rem;
+  width: 100%;
+  max-width: 350px;
   text-decoration: none;
-  text-align: center;
-  justify-content: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
   
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     text-decoration: none;
-  }
-  
-  &:active {
-    transform: translateY(0px);
   }
 `;
 
@@ -157,8 +151,6 @@ const AnimatedLetter = styled.span`
 
 /**
  * Main Menu component for game mode selection
- * 
- * @returns {JSX.Element} Rendered component
  */
 const Menu = () => {
   // Using title constant for the animated text
@@ -174,11 +166,9 @@ const Menu = () => {
         if (Howler.ctx && Howler.ctx.state === 'suspended') {
           Howler.ctx.resume().then(() => {
             playMusic();
-            console.log('Music continued in Menu after context resume');
           });
         } else {
           playMusic();
-          console.log('Music continued in Menu');
         }
       }, 100);
     }
@@ -199,25 +189,77 @@ const Menu = () => {
       <Subtitle>Mari Belajar Membaca, Menulis, dan Berhitung!</Subtitle>
       
       <ButtonsContainer>
-        <MenuButton to="/reading" color="var(--primary-color)" aria-label="Mode Membaca">
-          <IconWrapper><FontAwesomeIcon icon={faBook} /></IconWrapper>
-          Mode Membaca
-        </MenuButton>
+        <Link to="/reading" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
+          <MenuButton 
+            color="var(--primary-color)" 
+            aria-label="Mode Membaca"
+            whileHover={{ 
+              y: -5, 
+              boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
+            }}
+            whileTap={{ 
+              y: 0, 
+              scale: 0.95 
+            }}
+          >
+            <IconWrapper><FontAwesomeIcon icon={faBook} /></IconWrapper>
+            Mode Membaca
+          </MenuButton>
+        </Link>
         
-        <MenuButton to="/writing" color="var(--success-color)" aria-label="Mode Menulis">
-          <IconWrapper><FontAwesomeIcon icon={faPencilAlt} /></IconWrapper>
-          Mode Menulis
-        </MenuButton>
+        <Link to="/writing" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
+          <MenuButton 
+            color="var(--success-color)"
+            aria-label="Mode Menulis"
+            whileHover={{ 
+              y: -5, 
+              boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
+            }}
+            whileTap={{ 
+              y: 0, 
+              scale: 0.95 
+            }}
+          >
+            <IconWrapper><FontAwesomeIcon icon={faPencilAlt} /></IconWrapper>
+            Mode Menulis
+          </MenuButton>
+        </Link>
         
-        <MenuButton to="/counting" color="var(--primary-dark-color)" aria-label="Mode Berhitung">
-          <IconWrapper><FontAwesomeIcon icon={faCalculator} /></IconWrapper>
-          Mode Berhitung
-        </MenuButton>
+        <Link to="/counting" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
+          <MenuButton 
+            color="var(--primary-dark-color)" 
+            aria-label="Mode Berhitung"
+            whileHover={{ 
+              y: -5, 
+              boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
+            }}
+            whileTap={{ 
+              y: 0, 
+              scale: 0.95 
+            }}
+          >
+            <IconWrapper><FontAwesomeIcon icon={faCalculator} /></IconWrapper>
+            Mode Berhitung
+          </MenuButton>
+        </Link>
         
-        <MenuButton to="/about" color="var(--info-color)" aria-label="Tentang Permainan">
-          <IconWrapper><FontAwesomeIcon icon={faInfoCircle} /></IconWrapper>
-          Tentang Permainan
-        </MenuButton>
+        <Link to="/about" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
+          <MenuButton 
+            color="var(--info-color)" 
+            aria-label="Tentang Permainan"
+            whileHover={{ 
+              y: -5, 
+              boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
+            }}
+            whileTap={{ 
+              y: 0, 
+              scale: 0.95 
+            }}
+          >
+            <IconWrapper><FontAwesomeIcon icon={faInfoCircle} /></IconWrapper>
+            Tentang Permainan
+          </MenuButton>
+        </Link>
       </ButtonsContainer>
       <SoundControl />
     </MenuContainer>

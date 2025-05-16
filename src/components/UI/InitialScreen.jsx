@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Howler from 'howler';
 import styled, { keyframes } from 'styled-components';
+import { motion } from 'framer-motion';
 import useBackgroundMusic from '../../hooks/useBackgroundMusic';
 
 // Animasi untuk karakter melompat
@@ -99,7 +100,7 @@ const Subtitle = styled.p`
 `;
 
 // Tombol mulai
-const StartButton = styled.button`
+const StartButton = styled(motion.button)`
   padding: 1.5rem 3rem;
   font-size: 1.8rem;
   background: #FFC107;
@@ -109,21 +110,6 @@ const StartButton = styled.button`
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  animation: ${fadeIn} 1.5s ease-out 1s both;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-
-  &:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-    background: #FFD54F;
-  }
-
-  &:active {
-    transform: translateY(0) scale(0.95);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
 `;
 
 const InitialScreen = () => {
@@ -228,11 +214,27 @@ const InitialScreen = () => {
       </CharacterContainer>
       
       {/* Title and subtitle */}
-      <Title>Petualangan Ajaib Calistung</Title>
-      <Subtitle>Selamat datang di dunia belajar yang menyenangkan!</Subtitle>
+      <motion.div
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, type: "spring" }}
+      >
+        <Title>Petualangan Ajaib Calistung</Title>
+        <Subtitle>Selamat datang di dunia belajar yang menyenangkan!</Subtitle>
+      </motion.div>
       
-      {/* Start button */}
-      <StartButton onClick={handleStart}>
+      <StartButton 
+        onClick={handleStart}
+        whileHover={{ 
+          scale: 1.05, 
+          y: -5,
+          boxShadow: "0 6px 12px rgba(0, 0, 0, 0.2)"
+        }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.5, type: "spring", stiffness: 400, damping: 10 }}
+      >
         Mulai Petualangan
       </StartButton>
     </InitialContainer>

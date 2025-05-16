@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import styled, { keyframes } from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Animasi detak jantung untuk hati aktif
 const heartbeat = keyframes`
@@ -41,25 +42,10 @@ const HeartsContainer = styled.div`
   border: 2px solid rgba(255, 255, 255, 0.6);
 `;
 
-const HeartWrapper = styled.span`
+const HeartWrapper = styled(motion.span)`
   display: inline-block;
   font-size: 2rem;
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
-  animation: ${heartEntrance} 0.5s ease-out forwards;
-  animation-delay: ${props => props.$index * 0.2}s;
-  opacity: 0;
-  transform-origin: center;
-  
-  &:hover {
-    transform: scale(1.2);
-  }
-  
-  svg {
-    color: ${props => props.$active ? 'red' : '#aaaaaa'};
-    animation: ${props => props.$active ? heartbeat : props.$justLost ? heartLost : 'none'} 
-              ${props => props.$active ? '1.5s infinite' : '0.7s forwards'};
-    filter: drop-shadow(0 0 3px ${props => props.$active ? 'rgba(255, 94, 122, 0.5)' : 'transparent'});
-  }
 `;
 
 /**
@@ -71,44 +57,32 @@ const HeartWrapper = styled.span`
  * @returns {JSX.Element} - Rendered component
  */
 const HeartDisplay = ({ lives, maxLives = 3 }) => {
-  // Track previous lives for lost heart animation
-  const [prevLives, setPrevLives] = React.useState(lives);
-  const justLostHeart = React.useRef([false, false, false]);
-  
-  React.useEffect(() => {
-    if (lives < prevLives) {
-      // Mark which hearts were just lost for animation
-      for (let i = lives; i < prevLives; i++) {
-        justLostHeart.current[i] = true;
-      }
-      
-      // Reset the animation flag after animation completes
-      const timer = setTimeout(() => {
-        justLostHeart.current = [false, false, false];
-      }, 700); // matches animation duration
-      
-      return () => clearTimeout(timer);
-    }
-    setPrevLives(lives);
-  }, [lives, prevLives]);
-
   return (
     <HeartsContainer aria-label={`${lives} dari ${maxLives} nyawa tersisa`}>
-      {Array.from({ length: maxLives }).map((_, index) => (
-        <HeartWrapper 
-          key={index}
-          $index={index}
-          $active={index < lives}
-          $justLost={justLostHeart.current[index]}
-          className="heart"
-          aria-hidden="true"
-        >
-          <FontAwesomeIcon 
-            icon={faHeart} 
-            size="lg"
-          />
-        </HeartWrapper>
-      ))}
+      <AnimatePresence>
+        {Array.from({ length: maxLives }).map((_, index) => (
+          <HeartWrapper
+            key={index}
+            custom={index}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ 
+              scale: index < lives ? 1 : 0.5,
+              opacity: index < lives ? 1 : 0.3,
+              color: index < lives ? '#ff5e7a' : '#aaaaaa'
+            }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ 
+              delay: index * 0.1,
+              type: "spring", 
+              stiffness: 500,
+              damping: 15
+            }}
+            whileHover={{ scale: index < lives ? 1.2 : 0.6 }}
+          >
+            <FontAwesomeIcon icon={faHeart} size="lg" />
+          </HeartWrapper>
+        ))}
+      </AnimatePresence>
     </HeartsContainer>
   );
 };

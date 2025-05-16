@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import './styles/App.css'
 import './styles/global.css'
 import Howler from 'howler'
@@ -104,7 +105,18 @@ function App() {
         <p>Aplikasi ini dirancang untuk digunakan pada desktop/laptop. Silakan gunakan komputer untuk pengalaman yang lebih baik.</p>
       </div>
       
-      <Routes>
+      <AnimatedRoutes />
+    </Router>
+  );
+}
+
+// Wrap routes with AnimatePresence
+function AnimatedRoutes() {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         <Route path="/" element={<InitialScreen />} />
         <Route path="/splash" element={<SplashScreen />} />
         <Route path="/menu" element={<Menu />} />
@@ -117,7 +129,7 @@ function App() {
           </ErrorBoundary>
         } />
       </Routes>
-    </Router>
+    </AnimatePresence>
   );
 }
 

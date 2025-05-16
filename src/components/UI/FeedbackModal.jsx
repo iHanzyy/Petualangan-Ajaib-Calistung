@@ -1,34 +1,32 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
 import useAudio from '../../hooks/useAudio';
 
-const ModalOverlay = styled.div`
+const ModalOverlay = styled(motion.div)`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  right: 0;
+  bottom: 0;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
-  opacity: ${props => (props.$isVisible ? 1 : 0)};
-  visibility: ${props => (props.$isVisible ? 'visible' : 'hidden')};
-  transition: all 0.3s ease;
 `;
 
-const ModalContent = styled.div`
-  background-color: white;
-  border-radius: var(--border-radius);
+const ModalContent = styled(motion.div)`
+  background: white;
   padding: 2rem;
-  max-width: 500px;
+  border-radius: var(--border-radius);
   width: 90%;
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  transform: ${props => (props.$isVisible ? 'scale(1)' : 'scale(0.8)')};
-  transition: transform 0.3s ease;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 `;
 
 const Title = styled.h2`
@@ -107,17 +105,14 @@ const FeedbackModal = ({
   actionText = 'Lanjutkan',
   closeText = 'Tutup'
 }) => {
-  // Tambahkan audio hook di dalam FeedbackModal
   const { play } = useAudio({
     correct: '/sounds/correct.mp3',
     wrong: '/sounds/wrong.mp3',
     click: '/sounds/click-button.mp3'
   });
   
-  // Mainkan suara saat modal muncul
   useEffect(() => {
     if (isVisible) {
-      // Delay kecil untuk memastikan DOM telah dirender
       const timer = setTimeout(() => {
         if (isSuccess) {
           play('correct');
@@ -131,46 +126,70 @@ const FeedbackModal = ({
   }, [isVisible, isSuccess, play]);
 
   return (
-    <ModalOverlay 
-      $isVisible={isVisible}
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
-      <ModalContent 
-        $isVisible={isVisible}
-        onClick={e => e.stopPropagation()}
-      >
-        {imageSrc && <Image src={imageSrc} alt="" aria-hidden="true" />}
-        
-        <Title id="modal-title" $isSuccess={isSuccess}>
-          {title}
-        </Title>
-        
-        <Message>
-          {message}
-        </Message>
-        
-        <ButtonContainer>
-          {onAction && (
-            <Button 
-              className="primary"
-              onClick={onAction}
-            >
-              {actionText}
-            </Button>
-          )}
-          
-          <Button 
-            className="secondary"
-            onClick={onClose}
+    <AnimatePresence>
+      {isVisible && (
+        <ModalOverlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
+          <ModalContent
+            onClick={e => e.stopPropagation()}
+            initial={{ scale: 0.5, opacity: 0, y: 50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.5, opacity: 0, y: 50 }}
+            transition={{ type: "spring", damping: 15 }}
           >
-            {closeText}
-          </Button>
-        </ButtonContainer>
-      </ModalContent>
-    </ModalOverlay>
+            {imageSrc && (
+              <motion.img 
+                src={imageSrc} 
+                alt="" 
+                aria-hidden="true"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                style={{ width: '150px', height: 'auto', marginBottom: '1rem' }}
+              />
+            )}
+            
+            <Title id="modal-title" $isSuccess={isSuccess}>
+              {title}
+            </Title>
+            
+            <Message>
+              {message}
+            </Message>
+            
+            <ButtonContainer>
+              {onAction && (
+                <Button 
+                  as={motion.button}
+                  className="primary"
+                  onClick={onAction}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {actionText}
+                </Button>
+              )}
+              
+              <Button 
+                as={motion.button}
+                onClick={onClose}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {closeText}
+              </Button>
+            </ButtonContainer>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+    </AnimatePresence>
   );
 };
 
