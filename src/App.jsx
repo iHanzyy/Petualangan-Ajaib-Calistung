@@ -13,6 +13,7 @@ import Writing from './components/GameModes/Writing'
 import Counting from './components/GameModes/Counting'
 import SplashScreen from './components/UI/SplashScreen'
 import InitialScreen from './components/UI/InitialScreen'
+import PageTransition from './components/UI/PageTransition'
 
 // Import custom hooks
 import useAudio from './hooks/useAudio'
@@ -117,16 +118,42 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<InitialScreen />} />
-        <Route path="/splash" element={<SplashScreen />} />
-        <Route path="/menu" element={<Menu />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/reading" element={<Reading />} />
-        <Route path="/writing" element={<Writing />} />
+        <Route path="/" element={
+          <PageTransition type="fade">
+            <InitialScreen />
+          </PageTransition>
+        } />
+        <Route path="/splash" element={
+          <PageTransition type="fade">
+            <SplashScreen />
+          </PageTransition>
+        } />
+        <Route path="/menu" element={
+          <PageTransition type="slideUp">
+            <Menu />
+          </PageTransition>
+        } />
+        <Route path="/about" element={
+          <PageTransition type="slideLeft">
+            <About />
+          </PageTransition>
+        } />
+        <Route path="/reading" element={
+          <PageTransition type="slideLeft" background="var(--primary-color)">
+            <Reading />
+          </PageTransition>
+        } />
+        <Route path="/writing" element={
+          <PageTransition type="slideLeft" background="var(--success-color)">
+            <Writing />
+          </PageTransition>
+        } />
         <Route path="/counting" element={
-          <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <Counting />
-          </ErrorBoundary>
+          <PageTransition type="slideLeft" background="var(--primary-dark-color)">
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Counting />
+            </ErrorBoundary>
+          </PageTransition>
         } />
       </Routes>
     </AnimatePresence>

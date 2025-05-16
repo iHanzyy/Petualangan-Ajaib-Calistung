@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEraser, faRedo, faCheck } from '@fortawesome/free-solid-svg-icons';
@@ -21,7 +22,7 @@ const SAMPLE_TARGETS = [
   '6', '7', '8', '9', '0'
 ];
 
-const GameContainer = styled.div`
+const GameContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -334,20 +335,41 @@ const Writing = () => {
   return (
     <>
       <GameContainer>
-        <HeaderContainer>
+        <HeaderContainer
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
           <HomeButton />
           <Score>Skor: {score}</Score>
         </HeaderContainer>
         
         <HeartDisplay lives={lives} />
         
-        <Instructions>
+        <Instructions
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+        >
           Tulis huruf atau angka berikut dengan benar.
         </Instructions>
         
-        <TargetDisplay>{currentTarget}</TargetDisplay>
+        <TargetDisplay
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ 
+            delay: 0.4, 
+            type: "spring", 
+            stiffness: 300, 
+            damping: 10 
+          }}
+        >{currentTarget}</TargetDisplay>
         
-        <CanvasContainer>
+        <CanvasContainer
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
           <DrawingCanvas 
             ref={canvasRef}
             width={250} 
@@ -356,11 +378,17 @@ const Writing = () => {
           />
         </CanvasContainer>
         
-        <ControlsContainer>
+        <ControlsContainer
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
           <IconButton 
             onClick={clearCanvas}
             color="var(--danger-color)"
             aria-label="Hapus"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
             <FontAwesomeIcon icon={faEraser} />
           </IconButton>
@@ -369,6 +397,8 @@ const Writing = () => {
             onClick={selectRandomTarget}
             color="var(--warning-color)"
             aria-label="Ganti huruf/angka"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
             <FontAwesomeIcon icon={faRedo} />
           </IconButton>
@@ -378,13 +408,14 @@ const Writing = () => {
             disabled={!hasDrawn}
             color="var(--success-color)"
             aria-label="Periksa jawaban"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
             <FontAwesomeIcon icon={faCheck} />
           </IconButton>
         </ControlsContainer>
       </GameContainer>
       
-      {/* Pindahkan SoundControl ke luar GameContainer, konsisten dengan Reading.jsx */}
       <SoundControl />
       
       {showNextModal && (
