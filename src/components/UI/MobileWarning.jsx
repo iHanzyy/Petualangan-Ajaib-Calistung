@@ -311,7 +311,7 @@ const MobileWarning = () => {
           style={{ overflow: 'hidden' }}
         >
           <Text>
-            Beberapa fitur seperti menulis huruf, mendengarkan suara, dan aktivitas drag-and-drop memerlukan layar yang lebih besar untuk pengalaman optimal.
+            Beberapa fitur seperti menulis huruf, dan mendengarkan suara memerlukan layar yang lebih besar untuk pengalaman optimal.
           </Text>
         </motion.div>
         

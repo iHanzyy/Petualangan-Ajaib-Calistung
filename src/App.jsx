@@ -1,9 +1,9 @@
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import './styles/App.css'
 import './styles/global.css'
-import Howler from 'howler'
+import { Howler } from 'howler'
 
 // Import components
 import Menu from './components/UI/Menu'
@@ -39,6 +39,35 @@ const ErrorFallback = () => (
  * @returns {JSX.Element} - Rendered component
  */
 function App() {
+  // Set up Howler config once at app initialization
+  useEffect(() => {
+    // Ensure we use a single global AudioContext
+    Howler.autoUnlock = true;
+    Howler.autoSuspend = false;
+    Howler.html5PoolSize = 10;
+    
+    console.log("App initialized Howler settings");
+    
+    // Setup global error handler for Howler
+    window.addEventListener('error', (e) => {
+      if (e.message.includes('howler') || e.filename?.includes('howler')) {
+        console.error('Howler error caught:', e);
+        // Attempt to recover audio context if needed
+        if (Howler.ctx && Howler.ctx.state === 'suspended') {
+          Howler.ctx.resume().catch(err => 
+            console.error('Failed to resume audio context after error:', err)
+          );
+        }
+      }
+    });
+    
+    return () => {
+      // Clean up on app unmount (rare case)
+      console.log("App unmounting, cleaning up Howler");
+      Howler.unload();
+    };
+  }, []);
+
   const { play: playClick, isAudioReady } = useAudio({
     click: '/sounds/click-button.mp3',
     correct: '/sounds/correct.mp3',

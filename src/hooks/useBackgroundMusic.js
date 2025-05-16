@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Howl, Howler } from 'howler';
 
-// Membuat instance musik global agar tetap ada saat berpindah halaman
+// Variabel global untuk pelacakan status musik
 let globalMusic = null;
 let isInitializing = false;
+let instanceCount = 0;
+let playAttemptInProgress = false;
 
 /**
  * Custom hook to handle background music for the game
@@ -13,134 +15,162 @@ let isInitializing = false;
 const useBackgroundMusic = () => {
   const musicRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const hookId = useRef(`instance-${++instanceCount}`);
+  
+  // Log untuk debugging
+  console.log(`useBackgroundMusic hook instantiated: ${hookId.current}`);
   
   // Initialize music once on mount
   useEffect(() => {
+    console.log(`[${hookId.current}] useBackgroundMusic effect running`);
+    
     // Prevent multiple initialization attempts
-    if (isInitializing) return;
+    if (isInitializing) {
+      console.log(`[${hookId.current}] Another initialization is in progress, waiting`);
+      
+      // Jika proses inisialisasi sedang berjalan, atur reference ke musik global
+      if (globalMusic) {
+        musicRef.current = globalMusic;
+      }
+      return;
+    }
     
     // Check if we already have global music instance or if we need to initialize
     if (!globalMusic) {
       isInitializing = true;
-      console.log('Creating new background music instance');
+      console.log(`[${hookId.current}] Creating new background music instance`);
       
-      globalMusic = new Howl({
-        src: ['/sounds/background-music.mp3'],
-        loop: true,
-        volume: 0.5,
-        autoplay: false,
-        preload: true, // Make sure audio is preloaded
-        html5: true, // Use HTML5 Audio to avoid some mobile browser limitations
-        onplay: () => {
-          setIsPlaying(true);
-          console.log('Music playing event triggered');
-        },
-        onpause: () => {
-          setIsPlaying(false);
-          console.log('Music paused event triggered');
-        },
-        onstop: () => {
-          setIsPlaying(false);
-          console.log('Music stopped event triggered');
-        },
-        onload: () => {
-          isInitializing = false;
-        },
-        onloaderror: (id, err) => {
-          console.error('Error loading music:', err);
-          isInitializing = false;
-        },
-        onplayerror: (id, err) => {
-          console.error('Error playing music:', err);
-          isInitializing = false;
-          // Try to recover
-          if (Howler.ctx && Howler.ctx.state === 'suspended') {
-            Howler.ctx.resume().then(() => {
-              globalMusic.once('unlock', function() {
-                globalMusic.play();
+      try {
+        globalMusic = new Howl({
+          src: ['/sounds/background-music.mp3'],
+          loop: true,
+          volume: 0.5,
+          autoplay: false,
+          preload: true,
+          html5: true,
+          onload: () => {
+            console.log(`[${hookId.current}] Music loaded successfully`);
+            isInitializing = false;
+            
+            // Check state dari localStorage setelah musik berhasil dimuat
+            const shouldPlay = localStorage.getItem('backgroundMusicPlaying') === 'true';
+            if (shouldPlay && !globalMusic.playing()) {
+              console.log(`[${hookId.current}] Auto-playing music based on localStorage state`);
+              safePlayMusic();
+            }
+          },
+          onloaderror: (id, err) => {
+            console.error(`[${hookId.current}] Error loading music:`, err);
+            isInitializing = false;
+          },
+          onplay: () => {
+            console.log(`[${hookId.current}] Music playing`);
+            setIsPlaying(true);
+            playAttemptInProgress = false;
+          },
+          onpause: () => {
+            console.log(`[${hookId.current}] Music paused`);
+            setIsPlaying(false);
+          },
+          onstop: () => {
+            console.log(`[${hookId.current}] Music stopped`);
+            setIsPlaying(false);
+          },
+          onend: () => {
+            console.log(`[${hookId.current}] Music ended (should loop)`);
+          },
+          onplayerror: (id, err) => {
+            console.error(`[${hookId.current}] Error playing music:`, err);
+            playAttemptInProgress = false;
+            
+            // Try to recover
+            if (Howler.ctx && Howler.ctx.state === 'suspended') {
+              Howler.ctx.resume().then(() => {
+                globalMusic.once('unlock', function() {
+                  globalMusic.play();
+                });
               });
-            });
+            }
           }
-        }
-      });
+        });
+      } catch (error) {
+        console.error(`[${hookId.current}] Exception creating Howl:`, error);
+        isInitializing = false;
+      }
+    } else {
+      console.log(`[${hookId.current}] Using existing music instance`);
     }
     
+    // Always set the music reference
     musicRef.current = globalMusic;
     
-    // Check localStorage to see if music should be playing
-    const musicStatus = localStorage.getItem('backgroundMusicPlaying');
-    
-    // Try to play music if it should be playing according to localStorage
-    if (musicStatus === 'true' && !globalMusic.playing()) {
-      // Use a small timeout to ensure the audio context has time to initialize
-      setTimeout(() => {
-        if (Howler.ctx && Howler.ctx.state === 'suspended') {
-          Howler.ctx.resume().then(() => {
-            if (!globalMusic.playing()) {
-              globalMusic.play();
-              console.log('Music auto-resumed from localStorage state');
-            }
-          }).catch(err => console.error('Failed to resume audio context:', err));
-        } else {
-          if (!globalMusic.playing()) {
-            globalMusic.play();
-            console.log('Music auto-played from localStorage state');
-          }
-        }
-      }, 300);
-    }
-
-    // No cleanup required as we want music to persist between component unmounts
+    // Clean up function not needed as we want the global music instance to persist
+    return () => {
+      console.log(`[${hookId.current}] useBackgroundMusic unmounting, but keeping global instance`);
+    };
   }, []);
-
-  const playMusic = () => {
-    if (musicRef.current && !musicRef.current.playing()) {
-      // First ensure AudioContext is running
-      const resumeAndPlay = () => {
-        try {
-          console.log("Music playing attempt made");
-          musicRef.current.play();
-        } catch (e) {
-          console.error("Error playing music:", e);
-        }
-      };
-
-      // For iOS and other platforms that require user interaction
-      if (Howler.ctx && Howler.ctx.state === 'suspended') {
-        console.log("Audio context is suspended, attempting to resume");
+  
+  // Safe play function with debounce logic
+  const safePlayMusic = () => {
+    if (playAttemptInProgress) {
+      console.log(`[${hookId.current}] Play attempt already in progress, skipping`);
+      return;
+    }
+    
+    playAttemptInProgress = true;
+    
+    if (musicRef.current) {
+      if (!musicRef.current.playing()) {
+        console.log(`[${hookId.current}] Attempting to play music`);
         
-        // Try to resume the context
-        Howler.ctx.resume()
-          .then(() => {
-            console.log("Audio context resumed successfully");
-            resumeAndPlay();
-          })
-          .catch(err => {
-            console.error('Failed to resume audio context:', err);
-            // Try to play anyway as a fallback
-            resumeAndPlay();
-          });
+        const resumeAndPlay = () => {
+          try {
+            musicRef.current.play();
+          } catch (e) {
+            console.error(`[${hookId.current}] Error playing music:`, e);
+            playAttemptInProgress = false;
+          }
+        };
+        
+        if (Howler.ctx && Howler.ctx.state === 'suspended') {
+          console.log(`[${hookId.current}] Audio context suspended, resuming first`);
+          Howler.ctx.resume()
+            .then(() => {
+              console.log(`[${hookId.current}] Audio context resumed successfully`);
+              resumeAndPlay();
+            })
+            .catch(err => {
+              console.error(`[${hookId.current}] Failed to resume audio context:`, err);
+              playAttemptInProgress = false;
+              resumeAndPlay(); // Try anyway as last resort
+            });
+        } else {
+          resumeAndPlay();
+        }
+        
+        // Save state to localStorage
+        localStorage.setItem('backgroundMusicPlaying', 'true');
       } else {
-        console.log("Audio context is ready, playing directly");
-        resumeAndPlay();
+        console.log(`[${hookId.current}] Music is already playing, no action taken`);
+        playAttemptInProgress = false;
       }
-      
-      // Save music playing status to localStorage
-      localStorage.setItem('backgroundMusicPlaying', 'true');
-    } else if (musicRef.current && musicRef.current.playing()) {
-      console.log('Music is already playing, no action needed');
     } else {
-      console.error("Music reference is not initialized");
+      console.error(`[${hookId.current}] Music reference is not initialized`);
+      playAttemptInProgress = false;
     }
   };
 
+  const playMusic = () => {
+    // Menambahkan timeout kecil untuk menghindari multiple calls dalam timing yang sama
+    setTimeout(() => {
+      safePlayMusic();
+    }, 50);
+  };
+
   const pauseMusic = () => {
-    if (musicRef.current) {
-      if (musicRef.current.playing()) {
-        musicRef.current.pause();
-        console.log("Music paused");
-      }
-      // Save music playing status to localStorage
+    if (musicRef.current && musicRef.current.playing()) {
+      console.log(`[${hookId.current}] Pausing music`);
+      musicRef.current.pause();
       localStorage.setItem('backgroundMusicPlaying', 'false');
     }
   };
@@ -156,7 +186,14 @@ const useBackgroundMusic = () => {
     return musicRef.current ? musicRef.current.playing() : false;
   };
 
-  return { playMusic, pauseMusic, setVolume, isMusicPlaying, getMusicInstance: () => globalMusic };
+  return { 
+    playMusic, 
+    pauseMusic, 
+    setVolume, 
+    isMusicPlaying, 
+    isPlaying, 
+    getMusicInstance: () => musicRef.current 
+  };
 };
 
 export default useBackgroundMusic;

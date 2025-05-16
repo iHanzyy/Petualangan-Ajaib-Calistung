@@ -160,19 +160,43 @@ const Menu = () => {
   
   // Ensure music is still playing when menu loads
   useEffect(() => {
-    // Check if music should be playing
-    if (localStorage.getItem('backgroundMusicPlaying') === 'true' && !isMusicPlaying()) {
-      // Small delay to ensure context is ready
-      setTimeout(() => {
-        if (Howler.ctx && Howler.ctx.state === 'suspended') {
-          Howler.ctx.resume().then(() => {
-            playMusic();
-          });
-        } else {
-          playMusic();
-        }
-      }, 100);
+    console.log("Menu component mounted");
+    const checkAndPlayMusic = () => {
+      if (!isMusicPlaying()) {
+        console.log("Menu detected music not playing, playing it now");
+        
+        // Prevent multiple simultaneous attempts
+        setTimeout(() => {
+          if (Howler.ctx && Howler.ctx.state === 'suspended') {
+            Howler.ctx.resume().then(() => {
+              if (!isMusicPlaying()) { // Check again after resume
+                playMusic();
+              }
+            });
+          } else {
+            if (!isMusicPlaying()) { // Double check current state
+              playMusic();
+            }
+          }
+        }, 200);
+      } else {
+        console.log("Menu detected music already playing");
+      }
+    };
+
+    // Only play if it should be playing according to localStorage
+    const shouldBePlaying = localStorage.getItem('backgroundMusicPlaying') === 'true';
+    const isMuted = localStorage.getItem('isMuted') === 'true';
+    
+    if (shouldBePlaying && !isMuted) {
+      // Add a small delay to avoid race conditions
+      setTimeout(checkAndPlayMusic, 300);
     }
+    
+    return () => {
+      console.log("Menu component unmounting");
+      // No need to pause music when leaving menu
+    };
   }, [playMusic, isMusicPlaying]);
   
   return (

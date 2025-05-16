@@ -37,9 +37,11 @@ const SoundControl = () => {
   const [isMuted, setIsMuted] = useState(false);
   const { playMusic, pauseMusic, isMusicPlaying } = useBackgroundMusic();
   const wasMusicPlayingRef = useRef(false);
+  const actionInProgressRef = useRef(false); // Prevent rapid clicks
   
   // Check initial mute state on component mount
   useEffect(() => {
+    console.log("SoundControl mounted");
     // Load mute state from localStorage
     const savedMuteState = localStorage.getItem('isMuted');
     const muted = savedMuteState ? JSON.parse(savedMuteState) : false;
@@ -48,25 +50,39 @@ const SoundControl = () => {
     
     // Apply mute state directly to Howler
     if (muted) {
+      console.log("Initializing SoundControl as muted");
       Howler.volume(0);
       
-      // Save current music status for later
+      // Save current music status for later without triggering new actions
       wasMusicPlayingRef.current = localStorage.getItem('backgroundMusicPlaying') === 'true';
       
-      // If music should be playing but we're muted, update localStorage
       if (wasMusicPlayingRef.current) {
         localStorage.setItem('backgroundMusicWasPlaying', 'true');
       }
     } else {
+      console.log("Initializing SoundControl as unmuted");
       Howler.volume(1);
-      
-      // Check if music should be playing but explicitly avoid playing it again here
-      // This prevents audio doubling when SoundControl mounts
     }
+    
+    return () => {
+      console.log("SoundControl unmounted");
+    };
   }, []);
 
   const toggleMute = () => {
+    // Prevent multiple rapid clicks
+    if (actionInProgressRef.current) {
+      console.log("Action in progress, ignoring click");
+      return;
+    }
+    
+    actionInProgressRef.current = true;
+    setTimeout(() => {
+      actionInProgressRef.current = false;
+    }, 300);
+    
     const newMuteState = !isMuted;
+    console.log("Toggling mute state to:", newMuteState);
     
     // Update UI state
     setIsMuted(newMuteState);
@@ -83,9 +99,9 @@ const SoundControl = () => {
         localStorage.setItem('backgroundMusicWasPlaying', 'true');
       }
       
-      // Mute the sound (but don't pause the music)
+      // Mute the sound (don't pause the music, just set volume to 0)
       Howler.volume(0);
-      console.log("Sound is now muted, music state:", musicIsCurrentlyPlaying);
+      console.log("Sound is now muted, music state preserved:", musicIsCurrentlyPlaying);
     } else {
       // UNMUTE: Restore previous state
       
@@ -105,10 +121,10 @@ const SoundControl = () => {
           console.log("Resuming music after unmute");
           setTimeout(() => {
             playMusic();
-          }, 100);
+          }, 200); // Add small delay for stability
         }
       }
-      console.log("Sound is now unmuted, restoring music:", musicWasPlaying);
+      console.log("Sound is now unmuted, music state restored:", musicWasPlaying);
     }
     
     // Save mute state to localStorage

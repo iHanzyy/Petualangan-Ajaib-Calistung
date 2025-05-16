@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Howler from 'howler';
 import styled, { keyframes } from 'styled-components';
@@ -115,6 +115,7 @@ const StartButton = styled(motion.button)`
 const InitialScreen = () => {
   const navigate = useNavigate();
   const { playMusic, isMusicPlaying } = useBackgroundMusic();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Add touchstart listener for Howler AudioContext resume
   useEffect(() => {
@@ -144,55 +145,54 @@ const InitialScreen = () => {
   
   // Perbarui fungsi handleStart untuk menghindari multiple play
   const handleStart = () => {
-    console.log("Start button clicked, attempting to play music");
-    
-    // Create an audio context manually if needed for some browsers
-    if (!Howler.ctx) {
-      console.log("No Howler context, this shouldn't happen but creating a fallback");
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) {
-        const ctx = new AudioContext();
-        // Attach it to window to ensure it's not garbage collected
-        window._audioCtx = ctx;
-      }
+    // Prevent multiple clicks
+    if (isNavigating) {
+      console.log("Navigation already in progress, ignoring click");
+      return;
     }
     
-    // Ensure audio context is running
-    if (Howler.ctx && Howler.ctx.state === 'suspended') {
-      console.log("Audio context suspended, attempting to resume");
+    setIsNavigating(true);
+    console.log("Start button clicked, attempting to play music");
+    
+    // Play music only if it's not already playing
+    const musicIsPlaying = isMusicPlaying();
+    if (!musicIsPlaying) {
+      console.log("Music not playing, starting it now");
       
-      Howler.ctx.resume().then(() => {
-        console.log("Audio context resumed successfully");
-        // Play music after context is resumed, only if not already playing
-        if (!isMusicPlaying()) {
-          playMusic();
-        }
+      // Ensure audio context is running
+      if (Howler.ctx && Howler.ctx.state === 'suspended') {
+        console.log("Audio context suspended, attempting to resume");
         
-        // Add a little delay before navigating to ensure audio starts
-        setTimeout(() => {
-          navigate('/splash');
-        }, 300); // Longer delay to ensure audio starts
-      }).catch(err => {
-        console.error('Failed to resume audio context:', err);
-        // Try to play anyway then navigate
-        if (!isMusicPlaying()) {
+        Howler.ctx.resume().then(() => {
+          console.log("Audio context resumed successfully");
           playMusic();
-        }
+          
+          // Navigate after ensuring audio is playing
+          setTimeout(() => {
+            navigate('/splash');
+          }, 300);
+        }).catch(err => {
+          console.error('Failed to resume audio context:', err);
+          playMusic(); // Try anyway
+          
+          setTimeout(() => {
+            navigate('/splash');
+          }, 300);
+        });
+      } else {
+        // Play directly if context is ready
+        console.log("Audio context ready, playing music directly");
+        playMusic();
+        
         setTimeout(() => {
           navigate('/splash');
-        }, 300);
-      });
-    } else {
-      // Play background music directly if not already playing
-      console.log("Audio context ready, playing music directly");
-      if (!isMusicPlaying()) {
-        playMusic();
+        }, 200);
       }
-      
-      // Add a little delay before navigating to ensure audio starts
+    } else {
+      console.log("Music is already playing, just navigating");
       setTimeout(() => {
         navigate('/splash');
-      }, 200);
+      }, 100);
     }
   };
 
