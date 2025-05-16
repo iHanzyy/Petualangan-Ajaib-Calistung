@@ -14,6 +14,7 @@ import Counting from './components/GameModes/Counting'
 import SplashScreen from './components/UI/SplashScreen'
 import InitialScreen from './components/UI/InitialScreen'
 import PageTransition from './components/UI/PageTransition'
+import MobileWarning from './components/UI/MobileWarning' // Tambahkan import
 
 // Import custom hooks
 import useAudio from './hooks/useAudio'
@@ -100,10 +101,9 @@ function App() {
 
   return (
     <Router>
-      {/* Mobile warning message */}
+      {/* Gunakan komponen MobileWarning alih-alih div biasa */}
       <div id="mobile-warning" className="mobile-warning">
-        <h2>Peringatan Perangkat</h2>
-        <p>Aplikasi ini dirancang untuk digunakan pada desktop/laptop. Silakan gunakan komputer untuk pengalaman yang lebih baik.</p>
+        <MobileWarning />
       </div>
       
       <AnimatedRoutes />

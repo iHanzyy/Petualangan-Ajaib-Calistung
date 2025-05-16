@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faVolumeHigh, faVolumeMute } from '@fortawesome/free-solid-svg-icons';
-import { Howl, Howler } from 'howler'; // Import keduanya untuk akses yang benar
+import { Howler } from 'howler';
 import useBackgroundMusic from '../../hooks/useBackgroundMusic';
 
 const SoundButton = styled.button`
@@ -48,7 +48,7 @@ const SoundControl = () => {
     
     // Apply mute state directly to Howler
     if (muted) {
-      Howler.volume(0); // Gunakan sebagai method, bukan properti
+      Howler.volume(0);
       
       // Save current music status for later
       wasMusicPlayingRef.current = localStorage.getItem('backgroundMusicPlaying') === 'true';
@@ -58,18 +58,12 @@ const SoundControl = () => {
         localStorage.setItem('backgroundMusicWasPlaying', 'true');
       }
     } else {
-      Howler.volume(1); // Gunakan sebagai method, bukan properti
+      Howler.volume(1);
       
-      // Check if music should be playing
-      const musicShouldPlay = localStorage.getItem('backgroundMusicPlaying') === 'true';
-      if (musicShouldPlay && !isMusicPlaying()) {
-        // Small delay to ensure context is ready
-        setTimeout(() => {
-          playMusic();
-        }, 100);
-      }
+      // Check if music should be playing but explicitly avoid playing it again here
+      // This prevents audio doubling when SoundControl mounts
     }
-  }, [playMusic, isMusicPlaying]);
+  }, []);
 
   const toggleMute = () => {
     const newMuteState = !isMuted;
@@ -90,13 +84,13 @@ const SoundControl = () => {
       }
       
       // Mute the sound (but don't pause the music)
-      Howler.volume(0); // Gunakan sebagai method, bukan properti
+      Howler.volume(0);
       console.log("Sound is now muted, music state:", musicIsCurrentlyPlaying);
     } else {
       // UNMUTE: Restore previous state
       
       // Restore volume
-      Howler.volume(1); // Gunakan sebagai method, bukan properti
+      Howler.volume(1);
       
       // Check if music was playing before mute
       const musicWasPlaying = wasMusicPlayingRef.current || 
@@ -114,7 +108,6 @@ const SoundControl = () => {
           }, 100);
         }
       }
-      
       console.log("Sound is now unmuted, restoring music:", musicWasPlaying);
     }
     

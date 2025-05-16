@@ -3,6 +3,7 @@ import { Howl, Howler } from 'howler';
 
 // Membuat instance musik global agar tetap ada saat berpindah halaman
 let globalMusic = null;
+let isInitializing = false;
 
 /**
  * Custom hook to handle background music for the game
@@ -12,10 +13,17 @@ let globalMusic = null;
 const useBackgroundMusic = () => {
   const musicRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  
   // Initialize music once on mount
   useEffect(() => {
+    // Prevent multiple initialization attempts
+    if (isInitializing) return;
+    
     // Check if we already have global music instance or if we need to initialize
     if (!globalMusic) {
+      isInitializing = true;
+      console.log('Creating new background music instance');
+      
       globalMusic = new Howl({
         src: ['/sounds/background-music.mp3'],
         loop: true,
@@ -35,11 +43,16 @@ const useBackgroundMusic = () => {
           setIsPlaying(false);
           console.log('Music stopped event triggered');
         },
+        onload: () => {
+          isInitializing = false;
+        },
         onloaderror: (id, err) => {
           console.error('Error loading music:', err);
+          isInitializing = false;
         },
         onplayerror: (id, err) => {
           console.error('Error playing music:', err);
+          isInitializing = false;
           // Try to recover
           if (Howler.ctx && Howler.ctx.state === 'suspended') {
             Howler.ctx.resume().then(() => {
@@ -58,33 +71,37 @@ const useBackgroundMusic = () => {
     const musicStatus = localStorage.getItem('backgroundMusicPlaying');
     
     // Try to play music if it should be playing according to localStorage
-    if (musicStatus === 'true' && !musicRef.current.playing()) {
+    if (musicStatus === 'true' && !globalMusic.playing()) {
       // Use a small timeout to ensure the audio context has time to initialize
       setTimeout(() => {
         if (Howler.ctx && Howler.ctx.state === 'suspended') {
           Howler.ctx.resume().then(() => {
-            musicRef.current.play();
-            console.log('Music auto-resumed from localStorage state');
+            if (!globalMusic.playing()) {
+              globalMusic.play();
+              console.log('Music auto-resumed from localStorage state');
+            }
           }).catch(err => console.error('Failed to resume audio context:', err));
         } else {
-          musicRef.current.play();
-          console.log('Music auto-played from localStorage state');
+          if (!globalMusic.playing()) {
+            globalMusic.play();
+            console.log('Music auto-played from localStorage state');
+          }
         }
       }, 300);
     }
 
     // No cleanup required as we want music to persist between component unmounts
-  }, []);  const playMusic = () => {
-    if (musicRef.current) {
+  }, []);
+
+  const playMusic = () => {
+    if (musicRef.current && !musicRef.current.playing()) {
       // First ensure AudioContext is running
       const resumeAndPlay = () => {
-        if (!musicRef.current.playing()) {
-          try {
-            musicRef.current.play();
-            console.log("Music playing attempt made");
-          } catch (e) {
-            console.error("Error playing music:", e);
-          }
+        try {
+          console.log("Music playing attempt made");
+          musicRef.current.play();
+        } catch (e) {
+          console.error("Error playing music:", e);
         }
       };
 
@@ -110,6 +127,8 @@ const useBackgroundMusic = () => {
       
       // Save music playing status to localStorage
       localStorage.setItem('backgroundMusicPlaying', 'true');
+    } else if (musicRef.current && musicRef.current.playing()) {
+      console.log('Music is already playing, no action needed');
     } else {
       console.error("Music reference is not initialized");
     }
@@ -134,7 +153,7 @@ const useBackgroundMusic = () => {
 
   // Check if music is currently playing
   const isMusicPlaying = () => {
-    return isPlaying;
+    return musicRef.current ? musicRef.current.playing() : false;
   };
 
   return { playMusic, pauseMusic, setVolume, isMusicPlaying, getMusicInstance: () => globalMusic };

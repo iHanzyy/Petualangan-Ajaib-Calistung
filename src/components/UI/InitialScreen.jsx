@@ -141,6 +141,8 @@ const InitialScreen = () => {
       window.removeEventListener('touchstart', resumeAudio);
     };
   }, [playMusic, isMusicPlaying]);
+  
+  // Perbarui fungsi handleStart untuk menghindari multiple play
   const handleStart = () => {
     console.log("Start button clicked, attempting to play music");
     
@@ -159,11 +161,12 @@ const InitialScreen = () => {
     if (Howler.ctx && Howler.ctx.state === 'suspended') {
       console.log("Audio context suspended, attempting to resume");
       
-      // Force user interaction to be registered
       Howler.ctx.resume().then(() => {
         console.log("Audio context resumed successfully");
-        // Play music after context is resumed
-        playMusic();
+        // Play music after context is resumed, only if not already playing
+        if (!isMusicPlaying()) {
+          playMusic();
+        }
         
         // Add a little delay before navigating to ensure audio starts
         setTimeout(() => {
@@ -172,15 +175,19 @@ const InitialScreen = () => {
       }).catch(err => {
         console.error('Failed to resume audio context:', err);
         // Try to play anyway then navigate
-        playMusic();
+        if (!isMusicPlaying()) {
+          playMusic();
+        }
         setTimeout(() => {
           navigate('/splash');
         }, 300);
       });
     } else {
-      // Play background music directly
+      // Play background music directly if not already playing
       console.log("Audio context ready, playing music directly");
-      playMusic();
+      if (!isMusicPlaying()) {
+        playMusic();
+      }
       
       // Add a little delay before navigating to ensure audio starts
       setTimeout(() => {
