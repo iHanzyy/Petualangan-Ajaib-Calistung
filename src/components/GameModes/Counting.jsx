@@ -356,7 +356,7 @@ const Counting = () => {
   
   const { speak } = useTextToSpeech() || { speak: () => {} };
   
-  // Generate a new problem - defined before useEffect to avoid dependency issues
+  // Generate a new problem
   const generateNewProblem = useCallback(() => {
     try {
       const newProblem = generateProblem();
@@ -371,6 +371,25 @@ const Counting = () => {
       setHasError(true);
     }
   }, []);
+  
+  // Handle next problem
+  const handleNextProblem = () => {
+    setShowNextModal(false);
+    setTimeout(() => {
+      generateNewProblem();
+    }, 300);
+  };
+  
+  // Restart the game
+  const restartGame = () => {
+    setScore(0);
+    setLives(3);
+    setGameOver(false);
+    setShowNextModal(false);
+    setTimeout(() => {
+      generateNewProblem();
+    }, 300);
+  };
 
   // Component initialization
   useEffect(() => {
@@ -425,40 +444,27 @@ const Counting = () => {
   }, []);
 
   // Rest of the component functions
-  const checkAnswer = (answer) => {
-    if (isCorrect !== null) return;
-    
-    setSelectedAnswer(answer);
-    const correct = answer === problem.result;
+  const checkAnswer = (selectedAnswer) => {
+    const correct = selectedAnswer === problem.result;
     setIsCorrect(correct);
-
+    setSelectedAnswer(selectedAnswer);
+    
     try {
-      // Mainkan suara dengan segera, tanpa menunggu modal
       if (correct) {
         play('correct');
+        setScore(prev => prev + 10);
         setTimeout(() => {
           setShowNextModal(true);
-        }, 800);
+        }, 500);
       } else {
         play('wrong');
-        // Add shake animation safely
-        if (answerContainerRef.current) {
-          answerContainerRef.current.classList.add('shake-animation');
-          setTimeout(() => {
-            if (answerContainerRef.current) {
-              answerContainerRef.current.classList.remove('shake-animation');
-            }
-          }, 500);
-        }
-        // Hanya kurangi lives jika jawaban salah
-        setLives(prevLives => prevLives - 1);
-
-        if (lives <= 1) {
-          setTimeout(() => {
-            if (typeof play === 'function') play('gameOver');
+        setLives(prev => prev - 1);
+        setTimeout(() => {
+          setShowNextModal(true);
+          if (lives <= 1) {
             setGameOver(true);
-          }, 1000);
-        }
+          }
+        }, 500);
       }
     } catch (e) {
       console.error("Error playing sound:", e);
@@ -555,53 +561,31 @@ const Counting = () => {
       {/* Tambahkan SoundControl di luar GameContainer */}
       <SoundControl />
       
-      {/* Success Modal */}
-      {showNextModal && (
-        <ModalContainer>
-          <FeedbackModal
-            isVisible={showNextModal}
-            isSuccess={true}
-            title="Hebat!"
-            message={`Kamu berhasil menjawab dengan benar. Jawabannya adalah ${problem.result}. Lanjutkan ke soal berikutnya?`}
-            imageSrc="/images/success.png"
-            onClose={() => {
-              setShowNextModal(false);
-              generateNewProblem();
-            }}
-            onAction={() => {
-              setShowNextModal(false);
-              generateNewProblem();
-            }}
-            actionText="Lanjutkan"
-          />
-        </ModalContainer>
-      )}
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isVisible={showNextModal}
+        isSuccess={isCorrect}
+        title={isCorrect ? "Hebat!" : "Coba Lagi"}
+        message={isCorrect 
+          ? `Kamu berhasil menjawab dengan benar. Jawabannya adalah ${problem.result}. Lanjutkan ke soal berikutnya?` 
+          : `Jawabanmu belum tepat. Jawaban yang benar adalah ${problem.result}. Coba lagi ya!`}
+        imageSrc={isCorrect ? "/images/success.png" : "/images/try-again.png"}
+        onClose={handleNextProblem}
+        onAction={handleNextProblem}
+        actionText={isCorrect ? "Lanjutkan" : "Coba Lagi"}
+      />
       
       {/* Game Over Modal */}
-      {gameOver && (
-        <ModalContainer>
-          <FeedbackModal
-            isVisible={gameOver}
-            isSuccess={false}
-            title="Permainan Selesai"
-            message={`Skor akhir kamu: ${score}. Mau coba lagi?`}
-            imageSrc="/images/game-over.png"
-            onClose={() => {
-              setLives(3);
-              setScore(0);
-              setGameOver(false);
-              generateNewProblem();
-            }}
-            onAction={() => {
-              setLives(3);
-              setScore(0);
-              setGameOver(false);
-              generateNewProblem();
-            }}
-            actionText="Main Lagi"
-          />
-        </ModalContainer>
-      )}
+      <FeedbackModal
+        isVisible={gameOver}
+        isSuccess={false}
+        title="Permainan Selesai"
+        message={`Skor akhir kamu: ${score}. Mau coba lagi?`}
+        imageSrc="/images/game-over.png"
+        onClose={restartGame}
+        onAction={restartGame}
+        actionText="Main Lagi"
+      />
     </>
   );
 };

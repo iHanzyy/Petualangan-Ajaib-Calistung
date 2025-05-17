@@ -278,20 +278,22 @@ const Reading = () => {
     
     if (isCorrect) {
       play('correct');
-      setModalWord(currentWord);
-      setModalImage(getWordImagePath(currentWord));
+      setScore(prev => prev + 10);
       setTimeout(() => {
+        setModalWord(currentWord);
+        setModalImage(getWordImagePath(currentWord));
         setShowNextModal(true);
-      }, 800);
+      }, 500);
     } else {
       play('wrong');
-      setLives(prevLives => prevLives - 1);
+      setLives(prev => prev - 1);
       
-      if (lives <= 1) {
-        setTimeout(() => {
+      setTimeout(() => {
+        setShowNextModal(true);
+        if (lives <= 1) {
           setGameOver(true);
-        }, 1000);
-      }
+        }
+      }, 500);
     }
   };
   
@@ -308,7 +310,10 @@ const Reading = () => {
     setLives(3);
     setScore(0);
     setGameOver(false);
-    selectRandomWord();
+    setShowNextModal(false);
+    setTimeout(() => {
+      selectRandomWord();
+    }, 300);
   };
   
   return (
@@ -377,16 +382,18 @@ const Reading = () => {
 
       <SoundControl />
 
-      {/* Success Modal with dynamic image based on current word */}
+      {/* Feedback Modal */}
       <FeedbackModal
         isVisible={showNextModal}
-        isSuccess={true}
-        title="Hebat!"
-        message={`Kamu berhasil mengucapkan '${modalWord}' dengan benar. Lanjutkan ke kata berikutnya?`}
-        imageSrc={modalImage}
+        isSuccess={isCorrect}
+        title={isCorrect ? "Hebat!" : "Coba Lagi"}
+        message={isCorrect 
+          ? `Kamu berhasil mengucapkan "${modalWord}" dengan benar. Lanjutkan ke kata berikutnya?` 
+          : `Pengucapanmu belum tepat. Coba ucapkan "${currentWord}" lagi ya!`}
+        imageSrc={isCorrect ? modalImage : "/images/try-again.png"}
         onClose={handleNextWord}
         onAction={handleNextWord}
-        actionText="Kata Berikutnya"
+        actionText={isCorrect ? "Lanjutkan" : "Coba Lagi"}
       />
       
       {/* Game Over Modal */}

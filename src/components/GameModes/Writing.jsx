@@ -307,20 +307,27 @@ const Writing = () => {
     if (isDrawingCorrect) {
       play('correct');
       setScore(prev => prev + 10);
-      setShowNextModal(true);
+      setTimeout(() => {
+        setShowNextModal(true);
+      }, 500);
     } else {
       play('wrong');
       setLives(prev => prev - 1);
-      if (lives <= 1) {
-        setGameOver(true);
-      }
+      setTimeout(() => {
+        setShowNextModal(true);
+        if (lives <= 1) {
+          setGameOver(true);
+        }
+      }, 500);
     }
   };
   
   // Go to next target
   const handleNextTarget = () => {
     setShowNextModal(false);
-    selectRandomTarget();
+    setTimeout(() => {
+      selectRandomTarget();
+    }, 300);
   };
   
   // Restart the game
@@ -329,7 +336,9 @@ const Writing = () => {
     setLives(3);
     setGameOver(false);
     setShowNextModal(false);
-    selectRandomTarget();
+    setTimeout(() => {
+      selectRandomTarget();
+    }, 300);
   };
   
   return (
@@ -418,37 +427,29 @@ const Writing = () => {
       
       <SoundControl />
       
-      {showNextModal && (
-        <ModalContainer>
-          <FeedbackModal
-            isVisible={showNextModal}
-            isSuccess={isCorrect}
-            title={isCorrect ? "Hebat!" : "Coba Lagi"}
-            message={isCorrect 
-              ? `Kamu berhasil menulis huruf "${currentTarget}" dengan benar. Lanjutkan ke huruf berikutnya?` 
-              : "Tulisanmu belum tepat. Coba lagi ya!"}
-            imageSrc={isCorrect ? "/images/success.png" : "/images/try-again.png"}
-            onClose={() => setShowNextModal(false)}
-            onAction={handleNextTarget}
-            actionText="Huruf Berikutnya"
-          />
-        </ModalContainer>
-      )}
-
-      {gameOver && (
-        <ModalContainer>
-          <FeedbackModal
-            isVisible={gameOver}
-            isSuccess={false}
-            title="Permainan Selesai"
-            message={`Skor akhir kamu: ${score}. Mau coba lagi?`}
-            imageSrc="/images/game-over.png"
-            onClose={restartGame}
-            onAction={restartGame}
-            actionText="Main Lagi"
-          />
-        </ModalContainer>
-      )}
+      <FeedbackModal
+        isVisible={showNextModal}
+        isSuccess={isCorrect}
+        title={isCorrect ? "Hebat!" : "Coba Lagi"}
+        message={isCorrect 
+          ? `Kamu berhasil menulis '${currentTarget}' dengan benar. Lanjutkan ke huruf berikutnya?` 
+          : `Tulisanmu belum tepat. Coba tulis '${currentTarget}' lagi ya!`}
+        imageSrc={isCorrect ? "/images/success.png" : "/images/try-again.png"}
+        onClose={handleNextTarget}
+        onAction={handleNextTarget}
+        actionText={isCorrect ? "Lanjutkan" : "Coba Lagi"}
+      />
+      
+      <FeedbackModal
+        isVisible={gameOver}
+        isSuccess={false}
+        title="Permainan Selesai"
+        message={`Skor akhir kamu: ${score}. Mau coba lagi?`}
+        imageSrc="/images/game-over.png"
+        onClose={restartGame}
+        onAction={restartGame}
+        actionText="Main Lagi"
+      />
     </>
   );
 };
