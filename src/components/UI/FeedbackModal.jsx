@@ -159,9 +159,13 @@ const FeedbackModal = ({
     }
   }, [isVisible, isSuccess, play]);
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (e) => {
+    e.stopPropagation(); // Prevent event bubbling
     play('click');
-    onAction();
+    // Call onAction immediately to stop any ongoing speech
+    if (onAction) {
+      onAction();
+    }
   };
 
   if (!isVisible) return null;

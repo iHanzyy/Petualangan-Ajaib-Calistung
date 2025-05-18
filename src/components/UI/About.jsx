@@ -16,7 +16,9 @@ import {
 // Animasi latar belakang berwarna-warni
 const gradientAnimation = keyframes`
   0% { background-position: 0% 50% }
+  25% { background-position: 50% 25% }
   50% { background-position: 100% 50% }
+  75% { background-position: 50% 75% }
   100% { background-position: 0% 50% }
 `;
 
@@ -34,21 +36,34 @@ const PageContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(-45deg, #ffd1dc, #e2f0cb, #b5ead7, #c7ceea);
+  background: linear-gradient(-45deg, #FF6B6B, #4ECDC4, #45B7D1, #96E6B3, #FFD93D);
   background-size: 400% 400%;
   animation: ${gradientAnimation} 15s ease infinite;
   overflow: hidden;
   position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(255,255,255,0.1) 100%);
+    pointer-events: none;
+  }
 `;
 
 // Gelembung animasi
 const Bubble = styled(motion.div)`
   position: absolute;
-  background-color: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
   border-radius: 50%;
-  box-shadow: inset 0 0 10px rgba(255,255,255,0.8);
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.8);
+  backdrop-filter: blur(5px);
   z-index: 1;
   pointer-events: none;
+  animation: ${float} 6s ease-in-out infinite;
 `;
 
 // Karakter animasi
@@ -174,31 +189,56 @@ const About = () => {
         initial={{ opacity: 0 }}
         animate={{ 
           opacity: 0.6,
-          y: [0, -20, 0],
-          x: [0, 10, 0]
+          y: [0, -30, 0],
+          x: [0, 15, 0],
+          scale: [1, 1.1, 1]
         }}
         transition={{ repeat: Infinity, duration: 8 }}
-        style={{ width: '120px', height: '120px', top: '15%', left: '10%' }}
+        style={{ width: '150px', height: '150px', top: '15%', left: '10%' }}
       />
       <Bubble 
         initial={{ opacity: 0 }}
         animate={{ 
           opacity: 0.5,
-          y: [0, 20, 0],
-          x: [0, -15, 0]
+          y: [0, 25, 0],
+          x: [0, -20, 0],
+          scale: [1, 1.2, 1]
         }}
         transition={{ repeat: Infinity, duration: 10, delay: 1 }}
-        style={{ width: '80px', height: '80px', top: '70%', left: '15%' }}
+        style={{ width: '100px', height: '100px', top: '70%', left: '15%' }}
       />
       <Bubble 
         initial={{ opacity: 0 }}
         animate={{ 
           opacity: 0.4,
-          y: [0, -15, 0],
-          x: [0, -10, 0]
+          y: [0, -20, 0],
+          x: [0, -15, 0],
+          scale: [1, 1.15, 1]
         }}
         transition={{ repeat: Infinity, duration: 7, delay: 2 }}
-        style={{ width: '150px', height: '150px', top: '60%', left: '80%' }}
+        style={{ width: '180px', height: '180px', top: '60%', left: '80%' }}
+      />
+      <Bubble 
+        initial={{ opacity: 0 }}
+        animate={{ 
+          opacity: 0.3,
+          y: [0, 15, 0],
+          x: [0, 10, 0],
+          scale: [1, 1.1, 1]
+        }}
+        transition={{ repeat: Infinity, duration: 9, delay: 1.5 }}
+        style={{ width: '120px', height: '120px', top: '30%', left: '85%' }}
+      />
+      <Bubble 
+        initial={{ opacity: 0 }}
+        animate={{ 
+          opacity: 0.4,
+          y: [0, -25, 0],
+          x: [0, -10, 0],
+          scale: [1, 1.2, 1]
+        }}
+        transition={{ repeat: Infinity, duration: 11, delay: 0.5 }}
+        style={{ width: '90px', height: '90px', top: '80%', left: '70%' }}
       />
       
       {/* Karakter animasi */}

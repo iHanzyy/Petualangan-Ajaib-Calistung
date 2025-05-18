@@ -354,123 +354,114 @@ const Counting = () => {
     gameOver: '/sounds/game-over.mp3'
   }) || { play: () => {}, stopAll: () => {} };
   
-  const { speak } = useTextToSpeech() || { speak: () => {} };
-  
+  const { speak, cancel } = useTextToSpeech() || { speak: () => {}, cancel: () => {} };
+
+  // Safe cancel function with direct speech synthesis cancellation
+  const safeCancel = useCallback(() => {
+    if (cancel && typeof cancel === 'function') {
+      cancel();
+    }
+    // Direct cancellation of speech synthesis
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, [cancel]);
+
   // Generate a new problem
   const generateNewProblem = useCallback(() => {
-    try {
-      const newProblem = generateProblem();
-      const options = generateAnswerOptions(newProblem.result);
-      
-      setProblem(newProblem);
-      setAnswerOptions(options);
-      setSelectedAnswer(null);
-      setIsCorrect(null);
-    } catch (error) {
-      console.error("Error generating problem:", error);
-      setHasError(true);
-    }
+    const newProblem = generateProblem();
+    const options = generateAnswerOptions(newProblem.result);
+    setProblem(newProblem);
+    setAnswerOptions(options);
+    setSelectedAnswer(null);
+    setIsCorrect(null);
   }, []);
-  
+
   // Handle next problem
-  const handleNextProblem = () => {
+  const handleNextProblem = useCallback(() => {
+    safeCancel();
     setShowNextModal(false);
-    setTimeout(() => {
-      generateNewProblem();
-    }, 300);
-  };
-  
+    generateNewProblem();
+  }, [safeCancel, generateNewProblem]);
+
   // Restart the game
-  const restartGame = () => {
+  const restartGame = useCallback(() => {
+    safeCancel();
     setScore(0);
     setLives(3);
     setGameOver(false);
     setShowNextModal(false);
-    setTimeout(() => {
-      generateNewProblem();
-    }, 300);
-  };
+    generateNewProblem();
+  }, [safeCancel, generateNewProblem]);
 
-  // Component initialization
-  useEffect(() => {
-    console.log("Initializing Counting component...");
-    let isMounted = true;
-    let timeoutIds = [];
-    
-    const addTimeout = (callback, delay) => {
-      const id = setTimeout(() => {
-        if (isMounted) {
-          callback();
-        }
-      }, delay);
-      timeoutIds.push(id);
-      return id;
-    };
-    
-    // Memulai aplikasi dengan delay kecil untuk mencegah freeze
-    addTimeout(() => {
-      try {
-        if (isMounted) {
-          console.log("Generating first problem...");
-          generateNewProblem();
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error initializing game:", error);
-        if (isMounted) {
-          setHasError(true);
-          setIsLoading(false);
-        }
-      }
-    }, 100);
-    
-    // Cleanup function
-    return () => {
-      console.log("Cleaning up Counting component...");
-      isMounted = false;
-      
-      // Clear all timeouts
-      timeoutIds.forEach(id => clearTimeout(id));
-      
-      // Stop audio
-      if (stopAll && typeof stopAll === 'function') {
-        try {
-          stopAll();
-        } catch (e) {
-          console.error("Error stopping audio:", e);
-        }
-      }
-    };
-  }, []);
+  const handleModalAction = useCallback(() => {
+    safeCancel();
+    setShowNextModal(false);
+    if (gameOver) {
+      restartGame();
+    } else {
+      handleNextProblem();
+    }
+  }, [safeCancel, gameOver, handleNextProblem, restartGame]);
 
-  // Rest of the component functions
-  const checkAnswer = (selectedAnswer) => {
+  const checkAnswer = useCallback((selectedAnswer) => {
     const correct = selectedAnswer === problem.result;
     setIsCorrect(correct);
     setSelectedAnswer(selectedAnswer);
     
-    try {
-      if (correct) {
-        play('correct');
-        setScore(prev => prev + 10);
-        setTimeout(() => {
-          setShowNextModal(true);
-        }, 500);
-      } else {
-        play('wrong');
-        setLives(prev => prev - 1);
-        setTimeout(() => {
-          setShowNextModal(true);
-          if (lives <= 1) {
-            setGameOver(true);
-          }
-        }, 500);
-      }
-    } catch (e) {
-      console.error("Error playing sound:", e);
+    // Cancel any ongoing speech before starting new one
+    safeCancel();
+    
+    if (speak && typeof speak === 'function') {
+      speak(selectedAnswer.toString());
     }
-  };
-  
+    
+    if (correct) {
+      play('correct');
+      setScore(prev => prev + 10);
+      setTimeout(() => {
+        setShowNextModal(true);
+        if (speak && typeof speak === 'function') {
+          speak(`Kamu berhasil menjawab dengan benar. Jawabannya adalah ${problem.result}. Lanjutkan ke soal berikutnya?`);
+        }
+      }, 1000);
+    } else {
+      play('wrong');
+      setLives(prev => {
+        const newLives = prev - 1;
+        if (newLives <= 0) {
+          setGameOver(true);
+          // Add TTS for game over
+          if (speak && typeof speak === 'function') {
+            speak(`Permainan Selesai. Skor akhir kamu: ${score}. Mau coba lagi?`);
+          }
+        }
+        return newLives;
+      });
+      if (lives > 1) { // Only show modal if not game over
+        setTimeout(() => {
+          setShowNextModal(true);
+          if (speak && typeof speak === 'function') {
+            speak(`Jawabanmu belum tepat. Jawaban yang benar adalah ${problem.result}. Coba lagi ya!`);
+          }
+        }, 1000);
+      }
+    }
+  }, [problem, play, speak, safeCancel, lives, score]);
+
+  // Component initialization
+  useEffect(() => {
+    generateNewProblem();
+    setIsLoading(false);
+
+    return () => {
+      if (stopAll && typeof stopAll === 'function') {
+        stopAll();
+      }
+      safeCancel();
+    };
+  }, [generateNewProblem, stopAll, safeCancel]);
+
   // Render loading state
   if (isLoading) {
     return (
@@ -479,16 +470,14 @@ const Counting = () => {
           <HomeButton />
           <Score>Skor: {score}</Score>
         </HeaderContainer>
-        
         <HeartDisplay lives={lives} />
-        
         <div className="loading-screen">
           <h2>Memuat...</h2>
         </div>
       </GameContainer>
     );
   }
-  
+
   // Render error state
   if (hasError) {
     return (
@@ -497,14 +486,12 @@ const Counting = () => {
           <HomeButton />
           <Score>Skor: {score}</Score>
         </HeaderContainer>
-        
         <HeartDisplay lives={lives} />
-        
         <div className="error-screen">
           <h2>Terjadi Kesalahan</h2>
           <p>Maaf, terjadi kesalahan saat memuat mode berhitung.</p>
-          <SpeechButton as="a" href="/">
-            Kembali ke Menu
+          <SpeechButton onClick={() => window.location.reload()}>
+            Coba Lagi
           </SpeechButton>
         </div>
       </GameContainer>
@@ -570,8 +557,8 @@ const Counting = () => {
           ? `Kamu berhasil menjawab dengan benar. Jawabannya adalah ${problem.result}. Lanjutkan ke soal berikutnya?` 
           : `Jawabanmu belum tepat. Jawaban yang benar adalah ${problem.result}. Coba lagi ya!`}
         imageSrc={isCorrect ? "/images/success.png" : "/images/try-again.png"}
-        onClose={handleNextProblem}
-        onAction={handleNextProblem}
+        onClose={handleModalAction}
+        onAction={handleModalAction}
         actionText={isCorrect ? "Lanjutkan" : "Coba Lagi"}
       />
       
@@ -582,8 +569,8 @@ const Counting = () => {
         title="Permainan Selesai"
         message={`Skor akhir kamu: ${score}. Mau coba lagi?`}
         imageSrc="/images/game-over.png"
-        onClose={restartGame}
-        onAction={restartGame}
+        onClose={handleModalAction}
+        onAction={handleModalAction}
         actionText="Main Lagi"
       />
     </>
