@@ -358,14 +358,10 @@ const Counting = () => {
 
   // Safe cancel function with direct speech synthesis cancellation
   const safeCancel = useCallback(() => {
-    if (cancel && typeof cancel === 'function') {
-      cancel();
-    }
-    // Direct cancellation of speech synthesis
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-  }, [cancel]);
+  }, []);
 
   // Generate a new problem
   const generateNewProblem = useCallback(() => {
@@ -375,7 +371,8 @@ const Counting = () => {
     setAnswerOptions(options);
     setSelectedAnswer(null);
     setIsCorrect(null);
-  }, []);
+    speak(`${newProblem.a} ${getOperationText(newProblem.operation)} ${newProblem.b} sama dengan berapa?`);
+  }, [speak]);
 
   // Handle next problem
   const handleNextProblem = useCallback(() => {
@@ -431,14 +428,13 @@ const Counting = () => {
         const newLives = prev - 1;
         if (newLives <= 0) {
           setGameOver(true);
-          // Add TTS for game over
           if (speak && typeof speak === 'function') {
             speak(`Permainan Selesai. Skor akhir kamu: ${score}. Mau coba lagi?`);
           }
         }
         return newLives;
       });
-      if (lives > 1) { // Only show modal if not game over
+      if (lives > 1) {
         setTimeout(() => {
           setShowNextModal(true);
           if (speak && typeof speak === 'function') {
