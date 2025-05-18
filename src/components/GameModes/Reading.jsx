@@ -235,6 +235,13 @@ const Reading = () => {
     };
   }, [playMusic]);
   
+  // Safe cancel function with direct speech synthesis cancellation
+  const safeCancel = useCallback(() => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+
   // Select a random word on component mount
   useEffect(() => {
     selectRandomWord();
@@ -248,24 +255,28 @@ const Reading = () => {
   }, [transcript, isListening]);
   
   // Select a random word from the sample words
-  const selectRandomWord = () => {
+  const selectRandomWord = useCallback(() => {
     const randomIndex = Math.floor(Math.random() * SAMPLE_WORDS.length);
     const newWord = SAMPLE_WORDS[randomIndex];
     setCurrentWord(newWord);
     resetTranscript();
     setIsCorrect(null);
-  };
+    speak(newWord);
+  }, [speak, resetTranscript]);
   
   // Speak the current word
   const speakWord = useCallback(() => {
+    safeCancel();
     speak(currentWord);
-  }, [speak, currentWord]);
+  }, [speak, currentWord, safeCancel]);
   
   // Start listening for user's spoken response
   const handleStartListening = () => {
+    safeCancel();
     resetTranscript();
     setIsCorrect(null);
     startListening();
+    speak("Silakan ucapkan kata di atas");
   };
   
   // Check if the user's response matches the current word
@@ -283,22 +294,31 @@ const Reading = () => {
         setModalWord(currentWord);
         setModalImage(getWordImagePath(currentWord));
         setShowNextModal(true);
+        speak(`Kamu berhasil mengucapkan "${currentWord}" dengan benar. Lanjutkan ke kata berikutnya?`);
       }, 500);
     } else {
       play('wrong');
-      setLives(prev => prev - 1);
-      
-      setTimeout(() => {
-        setShowNextModal(true);
-        if (lives <= 1) {
+      setLives(prev => {
+        const newLives = prev - 1;
+        if (newLives <= 0) {
           setGameOver(true);
+          speak(`Permainan Selesai. Skor akhir kamu: ${score}. Mau coba lagi?`);
         }
-      }, 500);
+        return newLives;
+      });
+      
+      if (lives > 1) {
+        setTimeout(() => {
+          setShowNextModal(true);
+          speak(`Pengucapanmu belum tepat. Coba ucapkan "${currentWord}" lagi ya!`);
+        }, 500);
+      }
     }
   };
   
   // Go to next word
   const handleNextWord = () => {
+    safeCancel();
     setShowNextModal(false);
     setTimeout(() => {
       selectRandomWord();
@@ -307,6 +327,7 @@ const Reading = () => {
   
   // Restart the game
   const restartGame = () => {
+    safeCancel();
     setLives(3);
     setScore(0);
     setGameOver(false);
@@ -315,6 +336,14 @@ const Reading = () => {
       selectRandomWord();
     }, 300);
   };
+  
+  // Component initialization
+  useEffect(() => {
+    selectRandomWord();
+    return () => {
+      safeCancel();
+    };
+  }, [selectRandomWord, safeCancel]);
   
   return (
     <>
