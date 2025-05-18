@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -13,6 +13,7 @@ import SoundControl from '../UI/SoundControl';
 import useHandwriting from '../../hooks/useHandwriting';
 import useAudio from '../../hooks/useAudio';
 import useBackgroundMusic from '../../hooks/useBackgroundMusic';
+import useTextToSpeech from '../../hooks/useTextToSpeech';
 
 // Sample targets for the writing game (letters and numbers)
 const SAMPLE_TARGETS = [
@@ -208,6 +209,7 @@ const Writing = () => {
   const [isCorrect, setIsCorrect] = useState(false);
   
   // Custom hooks
+  const { speak } = useTextToSpeech();
   const {
     canvasRef,
     hasDrawn,
@@ -228,37 +230,87 @@ const Writing = () => {
     wrong: '/sounds/wrong.mp3',
     click: '/sounds/click-button.mp3'
   });
-  const { playMusic, pauseMusic } = useBackgroundMusic();
+  const { playMusic } = useBackgroundMusic();
   
-  // Initialize audio context and background music
-  useEffect(() => {
-    const initializeAudio = () => {
-      if (Howler.ctx && Howler.ctx.state === 'suspended') {
-        Howler.ctx.resume();
+  // Safe cancel function with direct speech synthesis cancellation
+  const safeCancel = useCallback(() => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
+  
+  // Select a random target from the sample targets
+  const selectRandomTarget = useCallback(() => {
+    const randomIndex = Math.floor(Math.random() * SAMPLE_TARGETS.length);
+    const newTarget = SAMPLE_TARGETS[randomIndex];
+    setCurrentTarget(newTarget);
+    clearCanvas();
+    setIsCorrect(false);
+    speak(`Tulis huruf ${newTarget}`);
+  }, [clearCanvas, speak]);
+  
+  // Check if the drawn input matches the target
+  const checkAnswer = useCallback(() => {
+    if (!hasDrawn) return;
+    
+    const isDrawingCorrect = compareToTarget();
+    setIsCorrect(isDrawingCorrect);
+    
+    if (isDrawingCorrect) {
+      play('correct');
+      setScore(prev => prev + 10);
+      setTimeout(() => {
+        setShowNextModal(true);
+        speak(`Kamu berhasil menulis '${currentTarget}' dengan benar. Lanjutkan ke huruf berikutnya?`);
+      }, 500);
+    } else {
+      play('wrong');
+      setLives(prev => {
+        const newLives = prev - 1;
+        if (newLives <= 0) {
+          setGameOver(true);
+          speak(`Permainan Selesai. Skor akhir kamu: ${score}. Mau coba lagi?`);
+        }
+        return newLives;
+      });
+      
+      if (lives > 1) {
+        setTimeout(() => {
+          setShowNextModal(true);
+          speak(`Tulisanmu belum tepat. Coba tulis '${currentTarget}' lagi ya!`);
+        }, 500);
       }
-      playMusic();
-    };
-
-    // Add click listener to initialize audio
-    const handleClick = () => {
-      initializeAudio();
-      document.removeEventListener('click', handleClick);
-    };
-    document.addEventListener('click', handleClick);
-
-    // Initialize audio on mount
-    initializeAudio();
-
-    return () => {
-      document.removeEventListener('click', handleClick);
-      // Hapus pauseMusic() di sini
-    };
-  }, [playMusic]); // Hapus pauseMusic dari dependencies
+    }
+  }, [hasDrawn, compareToTarget, currentTarget, play, speak, lives, score]);
   
-  // Select a random target on component mount
+  // Go to next target
+  const handleNextTarget = useCallback(() => {
+    safeCancel();
+    setShowNextModal(false);
+    setTimeout(() => {
+      selectRandomTarget();
+    }, 300);
+  }, [safeCancel, selectRandomTarget]);
+  
+  // Restart the game
+  const restartGame = useCallback(() => {
+    safeCancel();
+    setScore(0);
+    setLives(3);
+    setGameOver(false);
+    setShowNextModal(false);
+    setTimeout(() => {
+      selectRandomTarget();
+    }, 300);
+  }, [safeCancel, selectRandomTarget]);
+
+  // Component initialization
   useEffect(() => {
     selectRandomTarget();
-  }, []);
+    return () => {
+      safeCancel();
+    };
+  }, [selectRandomTarget, safeCancel]);
   
   // Set up canvas event listeners
   useEffect(() => {
@@ -288,58 +340,6 @@ const Writing = () => {
       canvas.removeEventListener('touchend', stopDrawing);
     };
   }, [startDrawing, draw, stopDrawing]);
-  
-  // Select a random target from the sample targets
-  const selectRandomTarget = () => {
-    const randomIndex = Math.floor(Math.random() * SAMPLE_TARGETS.length);
-    setCurrentTarget(SAMPLE_TARGETS[randomIndex]);
-    clearCanvas();
-    setIsCorrect(false);
-  };
-  
-  // Check if the drawn input matches the target
-  const checkAnswer = () => {
-    if (!hasDrawn) return;
-    
-    const isDrawingCorrect = compareToTarget();
-    setIsCorrect(isDrawingCorrect);
-    
-    if (isDrawingCorrect) {
-      play('correct');
-      setScore(prev => prev + 10);
-      setTimeout(() => {
-        setShowNextModal(true);
-      }, 500);
-    } else {
-      play('wrong');
-      setLives(prev => prev - 1);
-      setTimeout(() => {
-        setShowNextModal(true);
-        if (lives <= 1) {
-          setGameOver(true);
-        }
-      }, 500);
-    }
-  };
-  
-  // Go to next target
-  const handleNextTarget = () => {
-    setShowNextModal(false);
-    setTimeout(() => {
-      selectRandomTarget();
-    }, 300);
-  };
-  
-  // Restart the game
-  const restartGame = () => {
-    setScore(0);
-    setLives(3);
-    setGameOver(false);
-    setShowNextModal(false);
-    setTimeout(() => {
-      selectRandomTarget();
-    }, 300);
-  };
   
   return (
     <>
