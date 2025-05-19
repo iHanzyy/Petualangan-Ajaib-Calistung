@@ -77,7 +77,7 @@ Aplikasi ini dibangun dengan stack teknologi modern:
 1. Clone repositori ini
 
    ```bash
-   git clone https://github.com/username/petualangan-ajaib-calistung.git
+   git clone https://github.com/iHanzyy/petualangan-ajaib-calistung.git
    cd petualangan-ajaib-calistung
    ```
 
