@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRedo, faVolumeUp } from '@fortawesome/free-solid-svg-icons';
+import { Howler } from 'howler';
 
 import HomeButton from '../UI/HomeButton';
 import HeartDisplay from '../UI/HeartDisplay';
 import FeedbackModal from '../UI/FeedbackModal';
-import SoundControl from '../UI/SoundControl'; // Tambahkan import SoundControl
+import SoundControl from '../UI/SoundControl';
+import SoundButton from '../UI/SoundButton';
 
 import useAudio from '../../hooks/useAudio';
 import useTextToSpeech from '../../hooks/useTextToSpeech';
@@ -190,7 +192,7 @@ const AnswerContainer = styled.div`
   width: fit-content;
 `;
 
-const AnswerButton = styled.button`
+const AnswerButton = styled(SoundButton)`
   font-size: 2.8rem;
   font-weight: bold;
   padding: 1.2rem;
@@ -267,7 +269,7 @@ const Score = styled.div`
   z-index: 2;
 `;
 
-const SpeechButton = styled.button`
+const SpeechButton = styled(SoundButton)`
   background-color: var(--secondary-color);
   color: white;
   border: none;
@@ -285,7 +287,6 @@ const SpeechButton = styled.button`
   
   &:hover {
     transform: scale(1.1);
-    
   }
   
   &:active {
@@ -348,13 +349,29 @@ const Counting = () => {
   const answerContainerRef = React.useRef(null);
   
   // Custom hooks with error handling
-  const { play, stopAll } = useAudio({
+  const { play, stopAll, isAudioReady } = useAudio({
     correct: '/sounds/correct.mp3',
     wrong: '/sounds/wrong.mp3',
-    gameOver: '/sounds/game-over.mp3'
-  }) || { play: () => {}, stopAll: () => {} };
+    click: '/sounds/click-button.mp3'
+  }) || { play: () => {}, stopAll: () => {}, isAudioReady: false };
   
-  const { speak, cancel } = useTextToSpeech() || { speak: () => {}, cancel: () => {} };
+  const { speak } = useTextToSpeech() || { speak: () => {} };
+
+  // Initialize audio on mount
+  useEffect(() => {
+    const initAudio = async () => {
+      try {
+        if (Howler.ctx && Howler.ctx.state !== 'running') {
+          await Howler.ctx.resume();
+          console.log('Audio context resumed in Counting');
+        }
+      } catch (error) {
+        console.error('Error initializing audio in Counting:', error);
+      }
+    };
+    
+    initAudio();
+  }, []);
 
   // Safe cancel function with direct speech synthesis cancellation
   const safeCancel = useCallback(() => {
@@ -414,7 +431,13 @@ const Counting = () => {
     }
     
     if (correct) {
-      play('correct');
+      // Play correct sound with higher volume
+      if (isAudioReady) {
+        console.log('Playing correct sound');
+        play('correct');
+      } else {
+        console.log('Audio not ready for correct sound');
+      }
       setScore(prev => prev + 10);
       setTimeout(() => {
         setShowNextModal(true);
@@ -423,7 +446,13 @@ const Counting = () => {
         }
       }, 1000);
     } else {
-      play('wrong');
+      // Play wrong sound with higher volume
+      if (isAudioReady) {
+        console.log('Playing wrong sound');
+        play('wrong');
+      } else {
+        console.log('Audio not ready for wrong sound');
+      }
       setLives(prev => {
         const newLives = prev - 1;
         if (newLives <= 0) {
@@ -443,7 +472,7 @@ const Counting = () => {
         }, 1000);
       }
     }
-  }, [problem, play, speak, safeCancel, lives, score]);
+  }, [problem, play, speak, safeCancel, lives, score, isAudioReady]);
 
   // Component initialization
   useEffect(() => {

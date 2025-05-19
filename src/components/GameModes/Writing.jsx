@@ -9,6 +9,7 @@ import HomeButton from '../UI/HomeButton';
 import HeartDisplay from '../UI/HeartDisplay';
 import FeedbackModal from '../UI/FeedbackModal';
 import SoundControl from '../UI/SoundControl';
+import SoundButton from '../UI/SoundButton';
 
 import useHandwriting from '../../hooks/useHandwriting';
 import useAudio from '../../hooks/useAudio';
@@ -141,7 +142,7 @@ const ControlsContainer = styled.div`
   max-width: 90%;
 `;
 
-const IconButton = styled.button`
+const IconButton = styled(SoundButton)`
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import useAudio from '../../hooks/useAudio';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle, faTimesCircle, faTrophy } from '@fortawesome/free-solid-svg-icons';
 
@@ -152,29 +151,69 @@ const FeedbackModal = ({
   actionText = 'Lanjutkan',
   closeText = 'Tutup'
 }) => {
-  const { play } = useAudio({
-    correct: '/sounds/correct.mp3',
-    wrong: '/sounds/wrong.mp3',
-    click: '/sounds/click-button.mp3'
-  });
+  const correctAudioRef = useRef(null);
+  const wrongAudioRef = useRef(null);
   
+  // Initialize audio elements
   useEffect(() => {
+    correctAudioRef.current = new Audio('/sounds/correct.mp3');
+    wrongAudioRef.current = new Audio('/sounds/wrong.mp3');
+    
+    // Set volume
+    correctAudioRef.current.volume = 1.0;
+    wrongAudioRef.current.volume = 1.0;
+    
+    // Preload audio
+    correctAudioRef.current.load();
+    wrongAudioRef.current.load();
+    
+    return () => {
+      if (correctAudioRef.current) {
+        correctAudioRef.current.pause();
+        correctAudioRef.current = null;
+      }
+      if (wrongAudioRef.current) {
+        wrongAudioRef.current.pause();
+        wrongAudioRef.current = null;
+      }
+    };
+  }, []);
+  
+  // Play feedback sound when modal becomes visible
+  useEffect(() => {
+    let soundTimeout;
+    
     if (isVisible) {
-      const timer = setTimeout(() => {
-        if (isSuccess) {
-          play('correct');
-        } else {
-          play('wrong');
+      soundTimeout = setTimeout(() => {
+        try {
+          if (isSuccess && correctAudioRef.current) {
+            console.log('Playing correct sound');
+            correctAudioRef.current.currentTime = 0;
+            correctAudioRef.current.play().catch(err => {
+              console.error('Error playing correct sound:', err);
+            });
+          } else if (!isSuccess && wrongAudioRef.current) {
+            console.log('Playing wrong sound');
+            wrongAudioRef.current.currentTime = 0;
+            wrongAudioRef.current.play().catch(err => {
+              console.error('Error playing wrong sound:', err);
+            });
+          }
+        } catch (error) {
+          console.error('Error playing feedback sound:', error);
         }
-      }, 100);
-      
-      return () => clearTimeout(timer);
+      }, 300);
     }
-  }, [isVisible, isSuccess, play]);
+    
+    return () => {
+      if (soundTimeout) {
+        clearTimeout(soundTimeout);
+      }
+    };
+  }, [isVisible, isSuccess]);
 
   const handleButtonClick = (e) => {
     e.stopPropagation();
-    play('click');
     if (onAction) {
       onAction();
     }

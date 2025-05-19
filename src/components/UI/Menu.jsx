@@ -8,6 +8,7 @@ import useBackgroundMusic from '../../hooks/useBackgroundMusic';
 import { Howler } from 'howler';
 import { motion } from 'framer-motion';
 import FloatingElements from './FloatingElements'; // Tambahkan impor ini
+import SoundButton from './SoundButton';
 
 // Animasi untuk judul
 const bounce = keyframes`
@@ -119,7 +120,7 @@ const ButtonsContainer = styled.div`
 `;
 
 // Perbaikan: Gunakan styled(motion.a) alih-alih motion(Link) untuk menghindari masalah kompatibilitas
-const MenuButton = styled(motion.div)`
+const MenuButton = styled(SoundButton)`
   display: flex;
   align-items: center;
   justify-content: center;

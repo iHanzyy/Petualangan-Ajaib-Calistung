@@ -8,6 +8,7 @@ import HomeButton from '../UI/HomeButton';
 import HeartDisplay from '../UI/HeartDisplay';
 import FeedbackModal from '../UI/FeedbackModal';
 import SoundControl from '../UI/SoundControl';
+import SoundButton from '../UI/SoundButton';
 
 import useTextToSpeech from '../../hooks/useTextToSpeech';
 import useSpeechRecognition from '../../hooks/useSpeechRecognition';
@@ -112,7 +113,7 @@ const ControlsContainer = styled.div`
   justify-content: center;
 `;
 
-const IconButton = styled.button`
+const IconButton = styled(SoundButton)`
   display: flex;
   align-items: center;
   justify-content: center;

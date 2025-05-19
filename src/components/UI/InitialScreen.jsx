@@ -4,6 +4,7 @@ import Howler from 'howler';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import useBackgroundMusic from '../../hooks/useBackgroundMusic';
+import SoundButton from './SoundButton';
 
 // Animasi untuk karakter melompat dan sedikit rotasi - NOT USED NOW, MOVED TO FRAMER-MOTION
 /*
@@ -175,7 +176,7 @@ const Subtitle = styled(motion.h2)`
 `;
 
 // Tombol mulai
-const StartButton = styled(motion.button)`
+const StartButton = styled(SoundButton)`
   padding: 1.5rem 3rem;
   font-size: 1.8rem;
   font-family: 'Cal Sans', sans-serif;
