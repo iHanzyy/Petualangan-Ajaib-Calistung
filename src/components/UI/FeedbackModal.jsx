@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import useAudio from '../../hooks/useAudio';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faTimesCircle, faTrophy } from '@fortawesome/free-solid-svg-icons';
 
 const ModalOverlay = styled(motion.div)`
   position: fixed;
@@ -44,7 +44,7 @@ const ModalContent = styled(motion.div)`
   }
 `;
 
-const Title = styled.h2`
+const Title = styled(motion.h2)`
   font-size: 2.2rem;
   margin-bottom: 1rem;
   color: ${props => props.$isSuccess ? 'var(--success-color)' : 'var(--danger-color)'};
@@ -52,7 +52,7 @@ const Title = styled.h2`
   font-weight: 700;
 `;
 
-const Message = styled.p`
+const Message = styled(motion.p)`
   font-size: 1.2rem;
   margin-bottom: 1.5rem;
   line-height: 1.6;
@@ -67,14 +67,14 @@ const Image = styled(motion.img)`
   object-fit: contain;
 `;
 
-const ButtonContainer = styled.div`
+const ButtonContainer = styled(motion.div)`
   display: flex;
   justify-content: center;
   gap: 1rem;
   margin-top: 1.5rem;
 `;
 
-const ActionButton = styled.button`
+const ActionButton = styled(motion.button)`
   padding: 0.8rem 2rem;
   font-size: 1.2rem;
   font-weight: bold;
@@ -85,15 +85,6 @@ const ActionButton = styled.button`
   background: ${props => props.isSuccess ? 'var(--success-color)' : 'var(--danger-color)'};
   color: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-  }
-  
-  &:active {
-    transform: translateY(0);
-  }
 `;
 
 const IconContainer = styled(motion.div)`
@@ -111,6 +102,28 @@ const IconContainer = styled(motion.div)`
     height: 50px;
     color: ${props => props.$isSuccess ? 'var(--success-color)' : 'var(--danger-color)'};
   }
+`;
+
+const ConfettiContainer = styled(motion.div)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+`;
+
+const Confetti = styled(motion.div)`
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: ${props => props.color};
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 `;
 
 /**
@@ -160,76 +173,262 @@ const FeedbackModal = ({
   }, [isVisible, isSuccess, play]);
 
   const handleButtonClick = (e) => {
-    e.stopPropagation(); // Prevent event bubbling
+    e.stopPropagation();
     play('click');
-    // Call onAction immediately to stop any ongoing speech
     if (onAction) {
       onAction();
     }
   };
 
-  if (!isVisible) return null;
+  // Animation variants
+  const modalVariants = {
+    hidden: { 
+      scale: 0.5, 
+      opacity: 0, 
+      y: 50,
+      transition: {
+        duration: 0.3,
+        ease: "easeOut"
+      }
+    },
+    visible: { 
+      scale: 1, 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        type: "spring", 
+        damping: 15, 
+        stiffness: 300,
+        staggerChildren: 0.1
+      }
+    },
+    exit: { 
+      scale: 0.5, 
+      opacity: 0, 
+      y: 50,
+      transition: { 
+        duration: 0.2,
+        ease: "easeIn"
+      }
+    }
+  };
+
+  const iconVariants = {
+    hidden: { scale: 0, rotate: -180 },
+    visible: { 
+      scale: 1, 
+      rotate: 0,
+      transition: { 
+        type: "spring", 
+        damping: 15, 
+        stiffness: 300,
+        delay: 0.1 
+      }
+    }
+  };
+
+  const imageVariants = {
+    hidden: { scale: 0, rotate: 0 },
+    visible: { 
+      scale: 1, 
+      rotate: [0, 10, -10, 0],
+      transition: { 
+        delay: 0.2, 
+        duration: 0.5,
+        rotate: {
+          duration: 0.8,
+          repeat: isSuccess ? 1 : 0,
+          repeatType: "reverse"
+        }
+      }
+    }
+  };
+
+  const titleVariants = {
+    hidden: { y: -20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        delay: 0.3,
+        type: "spring",
+        stiffness: 200
+      }
+    }
+  };
+
+  const messageVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        delay: 0.4,
+        type: "spring",
+        stiffness: 200
+      }
+    }
+  };
+
+  const buttonVariants = {
+    hidden: { scale: 0.8, opacity: 0 },
+    visible: { 
+      scale: 1, 
+      opacity: 1,
+      transition: { 
+        delay: 0.5,
+        type: "spring",
+        stiffness: 200
+      }
+    },
+    hover: { 
+      scale: 1.1,
+      boxShadow: "0 6px 12px rgba(0, 0, 0, 0.3)",
+      transition: { duration: 0.2 }
+    },
+    tap: { 
+      scale: 0.95,
+      transition: { duration: 0.1 }
+    }
+  };
+
+  const confettiVariants = {
+    hidden: { 
+      scale: 0,
+      opacity: 0,
+      x: 0,
+      y: 0
+    },
+    visible: (i) => {
+      const angle = (i * 72) * (Math.PI / 180); // Spread in 5 directions
+      const distance = 200; // Maximum distance from center
+      const x = Math.cos(angle) * distance;
+      const y = Math.sin(angle) * distance;
+      
+      return {
+        scale: [0, 1, 1, 0],
+        opacity: [0, 1, 1, 0],
+        x: [0, x * 0.5, x, x * 1.2],
+        y: [0, y * 0.5, y, y * 1.2],
+        rotate: [0, 360],
+        transition: {
+          duration: 1.5,
+          times: [0, 0.2, 0.8, 1],
+          ease: "easeOut"
+        }
+      };
+    }
+  };
+
+  // Generate more confetti particles
+  const confettiColors = [
+    '#FFD700', // Gold
+    '#FF69B4', // Pink
+    '#00CED1', // Cyan
+    '#FF4500', // Orange Red
+    '#7CFC00', // Lawn Green
+    '#FF1493', // Deep Pink
+    '#00BFFF', // Deep Sky Blue
+    '#FFA500', // Orange
+    '#9370DB', // Medium Purple
+    '#32CD32'  // Lime Green
+  ];
 
   return (
-    <ModalOverlay
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
-    >
-      <ModalContent
-        $isSuccess={isSuccess}
-        onClick={e => e.stopPropagation()}
-        initial={{ scale: 0.5, opacity: 0, y: 50 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.5, opacity: 0, y: 50 }}
-        transition={{ type: "spring", damping: 15, stiffness: 300 }}
-      >
-        <IconContainer
-          $isSuccess={isSuccess}
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: "spring", damping: 15, stiffness: 300, delay: 0.1 }}
+    <AnimatePresence>
+      {isVisible && (
+        <ModalOverlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
         >
-          {isSuccess ? (
-            <FontAwesomeIcon icon={faCheckCircle} size="3x" />
-          ) : (
-            <FontAwesomeIcon icon={faTimesCircle} size="3x" />
-          )}
-        </IconContainer>
-        
-        {imageSrc && (
-          <Image 
-            src={imageSrc} 
-            alt={title} 
-            aria-hidden="true"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          />
-        )}
-        
-        <Title id="modal-title" $isSuccess={isSuccess}>
-          {title}
-        </Title>
-        
-        <Message>
-          {message}
-        </Message>
-        
-        <ButtonContainer>
-          <ActionButton 
-            onClick={handleButtonClick}
-            isSuccess={isSuccess}
+          <ModalContent
+            $isSuccess={isSuccess}
+            onClick={e => e.stopPropagation()}
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            key="modal-content"
           >
-            {actionText}
-          </ActionButton>
-        </ButtonContainer>
-      </ModalContent>
-    </ModalOverlay>
+            {isSuccess && (
+              <ConfettiContainer>
+                {confettiColors.map((color, i) => (
+                  <Confetti
+                    key={i}
+                    color={color}
+                    custom={i}
+                    variants={confettiVariants}
+                    initial="hidden"
+                    animate="visible"
+                  />
+                ))}
+              </ConfettiContainer>
+            )}
+
+            <IconContainer
+              $isSuccess={isSuccess}
+              variants={iconVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {isSuccess ? (
+                <FontAwesomeIcon icon={faCheckCircle} size="3x" />
+              ) : (
+                <FontAwesomeIcon icon={faTimesCircle} size="3x" />
+              )}
+            </IconContainer>
+            
+            {imageSrc && (
+              <Image 
+                src={imageSrc} 
+                alt={title} 
+                aria-hidden="true"
+                variants={imageVariants}
+                initial="hidden"
+                animate="visible"
+              />
+            )}
+            
+            <Title 
+              id="modal-title" 
+              $isSuccess={isSuccess}
+              variants={titleVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {title}
+            </Title>
+            
+            <Message
+              variants={messageVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {message}
+            </Message>
+            
+            <ButtonContainer>
+              <ActionButton 
+                onClick={handleButtonClick}
+                isSuccess={isSuccess}
+                variants={buttonVariants}
+                initial="hidden"
+                animate="visible"
+                whileHover="hover"
+                whileTap="tap"
+              >
+                {actionText}
+              </ActionButton>
+            </ButtonContainer>
+          </ModalContent>
+        </ModalOverlay>
+      )}
+    </AnimatePresence>
   );
 };
 
