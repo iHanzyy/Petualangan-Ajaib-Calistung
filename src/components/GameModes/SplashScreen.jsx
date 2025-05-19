@@ -1,0 +1,3 @@
+const BackgroundVideo = styled.video`
+// ... existing code ...
+`; 

@@ -2,149 +2,114 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
+import { useLocation } from 'react-router-dom';
 
-// Wrapper dengan fixed height dan overflow hidden untuk mencegah scrolling
-const TransitionWrapper = styled(motion.div)`
+// Wrapper untuk page content dengan persistent background to avoid white flashes
+// Ini mungkin tidak diperlukan jika background diatur di komponen halaman itu sendiri
+const PageWrapper = styled(motion.div)`
+  position: relative;
   width: 100%;
-  height: 100vh; // Menggunakan height tetap, bukan min-height
-  position: fixed; // Menggunakan fixed alih-alih absolute
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow: hidden; // Mencegah scrolling
+  min-height: 100vh;
+  /* Background should ideally be set on the page component itself */
+  /* background-color: ${props => props.$background}; */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
-// Overlay animasi yang akan menutupi seluruh layar
-const AnimationOverlay = styled(motion.div)`
+// Fullscreen overlay to mask transitions
+const Overlay = styled(motion.div)`
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: ${props => props.$background || '#ffffff'};
-  z-index: 999;
+  background-color: ${props => props.$background || 'black'}; // Gunakan default black agar lebih pasti menutupi
+  z-index: 1000;
   pointer-events: none;
-  transform-origin: center;
 `;
 
-// Content container yang tetap dalam viewport
-const ContentContainer = styled.div`
-  width: 100%;
-  height: 100%; // Menggunakan height 100% untuk mengisi parent
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto; // Memungkinkan scrolling hanya pada konten jika diperlukan
-  -webkit-overflow-scrolling: touch; // Untuk smooth scrolling di iOS
-`;
+// Variants for page content animation
+const contentVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 }
+};
 
-// Objek animasi untuk berbagai tipe transisi
+// Variants for overlay fade
+// Overlay start visible, quickly fade out on mount (initial page load or entry)
+// and quickly fade in on exit (before next page mounts)
+const overlayVariants = {
+  initial: { opacity: 1 }, // Overlay starts fully opaque
+  animate: { opacity: 0, transition: { duration: 0.4, ease: 'easeInOut' } }, // Overlay quickly fades out
+  exit: { opacity: 1, transition: { duration: 0.4, ease: 'easeInOut' } } // Overlay quickly fades in to cover exit
+};
+
+// Objek animasi untuk berbagai tipe transisi content
 const animations = {
   fade: {
     initial: { opacity: 0 },
     animate: { opacity: 1 },
     exit: { opacity: 0 },
-    transition: { duration: 0.3, ease: "easeInOut" } // Sedikit lebih cepat
+    transition: { duration: 0.5, ease: "easeInOut" }
   },
   slideUp: {
-    initial: { y: 20, opacity: 0 },
+    initial: { y: 50, opacity: 0 },
     animate: { y: 0, opacity: 1 },
-    exit: { y: -20, opacity: 0 },
-    transition: { duration: 0.3, ease: "easeInOut" }
+    exit: { y: -50, opacity: 0 },
+    transition: { duration: 0.5, ease: "easeInOut" }
   },
   slideLeft: {
     initial: { x: 50, opacity: 0 },
     animate: { x: 0, opacity: 1 },
     exit: { x: -50, opacity: 0 },
-    transition: { duration: 0.3, ease: "easeInOut" }
+    transition: { duration: 0.5, ease: "easeInOut" }
   },
-  zoom: {
-    initial: { scale: 0.95, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
-    exit: { scale: 1.05, opacity: 0 },
-    transition: { duration: 0.3, ease: "easeInOut" }
-  },
-  bounce: {
-    initial: { y: 20, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    exit: { y: -20, opacity: 0 },
-    transition: { 
-      type: "spring",
-      stiffness: 400,
-      damping: 25
-    }
-  }
+  // Tambahkan tipe lain jika diperlukan
 };
 
-// Animasi overlay yang lebih cepat untuk menghindari flash putih
-const overlayAnimations = {
-  fade: {
-    initial: { opacity: 1 },
-    animate: { opacity: 0 },
-    exit: { opacity: 1 },
-    transition: { duration: 0.25, ease: "easeInOut" }
-  },
-  slideUp: {
-    initial: { y: 0 },
-    animate: { y: '-100%' },
-    exit: { y: 0 },
-    transition: { duration: 0.25, ease: "easeInOut" }
-  },
-  slideLeft: {
-    initial: { x: 0 },
-    animate: { x: '-100%' },
-    exit: { x: 0 },
-    transition: { duration: 0.25, ease: "easeInOut" }
-  },
-  zoom: {
-    initial: { scale: 1, opacity: 1 },
-    animate: { scale: 1.5, opacity: 0 },
-    exit: { scale: 1, opacity: 1 },
-    transition: { duration: 0.25, ease: "easeInOut" }
-  },
-  bounce: {
-    initial: { y: 0 },
-    animate: { y: '-100%' },
-    exit: { y: 0 },
-    transition: { 
-      type: "spring",
-      stiffness: 400,
-      damping: 35
-    }
-  }
-};
 
-// Komponen PageTransition yang lebih baik
-const PageTransition = ({ children, type = "fade", background = "var(--primary-color)" }) => {
-  // Pilih animasi berdasarkan tipe
-  const animation = animations[type] || animations.fade;
-  const overlayAnimation = overlayAnimations[type] || overlayAnimations.fade;
-  
+/**
+ * PageTransition component to wrap routed pages.
+ * Uses AnimatePresence to wait for exit before enter,
+ * a fullscreen overlay to mask white background,
+ * and smooth fade/slide animations for content.
+ */
+const PageTransition = ({ children, type = "fade", background = 'var(--primary-color)' }) => {
+  const location = useLocation();
+
+  // Pilih animasi konten berdasarkan tipe
+  const pageAnimation = animations[type] || animations.fade;
+
   return (
-    <>
-      <TransitionWrapper 
-        {...animation}
-        className="page-transition"
+    <AnimatePresence mode="wait" initial={false}> {/* initial={false} prevents initial mount animation */} 
+      {/* Mask to prevent white flash between routes - appears quickly */} 
+      <Overlay
+        key="overlay"
+        $background={background}
+        variants={overlayVariants}
+        initial="initial"
+        animate="animate" // This will run immediately after mount
+        exit="exit" // This will run when the component is about to unmount
+      />
+
+      {/* Animated page container keyed by path */}
+      <motion.div 
+        key={location.pathname}
+        style={{ width: '100%', minHeight: '100vh', overflowY: 'auto' }} // Ensure container fills space
+        variants={pageAnimation} // Use selected page animation
+        initial="initial"
+        animate="animate"
+        exit="exit"
       >
-        <ContentContainer>
-          {children}
-        </ContentContainer>
-      </TransitionWrapper>
-      
-      <AnimatePresence mode="wait">
-        <AnimationOverlay
-          key="overlay"
-          {...overlayAnimation}
-          $background={background}
-        />
-      </AnimatePresence>
-    </>
+        {children}
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
 PageTransition.propTypes = {
   children: PropTypes.node.isRequired,
-  type: PropTypes.oneOf(['fade', 'slideUp', 'slideLeft', 'zoom', 'bounce']),
+  type: PropTypes.oneOf(Object.keys(animations)), // Allow selecting animation type
   background: PropTypes.string
 };
 

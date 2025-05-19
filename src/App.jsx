@@ -16,9 +16,6 @@ import InitialScreen from './components/UI/InitialScreen';
 import PageTransition from './components/UI/PageTransition';
 import MobileWarning from './components/UI/MobileWarning';
 
-// Import custom hooks
-import useAudio from './hooks/useAudio';
-
 // Import utility functions
 import { isMobileDevice, checkIsMobileFromSession, setupResizeListener } from './utils/deviceDetection';
 
@@ -110,13 +107,13 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<InitialScreen />} />
-        <Route path="/splash" element={<SplashScreen />} />
-        <Route path="/menu" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Menu /></ErrorBoundary>} />
-        <Route path="/about" element={<ErrorBoundary FallbackComponent={ErrorFallback}><About /></ErrorBoundary>} />
-        <Route path="/reading" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Reading /></ErrorBoundary>} />
-        <Route path="/writing" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Writing /></ErrorBoundary>} />
-        <Route path="/counting" element={<ErrorBoundary FallbackComponent={ErrorFallback}><Counting /></ErrorBoundary>} />
+        <Route path="/" element={<PageTransition type="fade"><InitialScreen /></PageTransition>} />
+        <Route path="/splash" element={<PageTransition type="blend" background="transparent"><SplashScreen /></PageTransition>} />
+        <Route path="/menu" element={<PageTransition type="fade"><ErrorBoundary FallbackComponent={ErrorFallback}><Menu /></ErrorBoundary></PageTransition>} />
+        <Route path="/about" element={<PageTransition type="fade"><ErrorBoundary FallbackComponent={ErrorFallback}><About /></ErrorBoundary></PageTransition>} />
+        <Route path="/reading" element={<PageTransition type="fade"><ErrorBoundary FallbackComponent={ErrorFallback}><Reading /></ErrorBoundary></PageTransition>} />
+        <Route path="/writing" element={<PageTransition type="fade"><ErrorBoundary FallbackComponent={ErrorFallback}><Writing /></ErrorBoundary></PageTransition>} />
+        <Route path="/counting" element={<PageTransition type="fade"><ErrorBoundary FallbackComponent={ErrorFallback}><Counting /></ErrorBoundary></PageTransition>} />
       </Routes>
     </AnimatePresence>
   );
