@@ -39,6 +39,7 @@ export default function useHandwriting({
 }) {
   const canvasRef = useRef(null);
   const templateCanvasRef = useRef(document.createElement('canvas'));
+  const maskRef = useRef([]);
   const [hasDrawn, setHasDrawn] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const lastPointRef = useRef(null);
@@ -69,7 +70,7 @@ export default function useHandwriting({
     }
   }, [width, height, lineColor, lineWidth, target, debugMode]);
 
-  // Setup template canvas offscreen — scale ONCE
+  // Setup template canvas offscreen — scale ONCE and compute mask
   useEffect(() => {
     const tpl = templateCanvasRef.current;
     const dpr = window.devicePixelRatio || 1;
@@ -84,6 +85,14 @@ export default function useHandwriting({
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, width, height);
     drawDashedTemplate(ctx, target, width, height);
+
+    // Precompute mask indices
+    const img = ctx.getImageData(0, 0, tpl.width, tpl.height).data;
+    const mask = [];
+    for (let i = 3; i < img.length; i += 4) {
+      if (img[i] > 30) mask.push(i - 3);
+    }
+    maskRef.current = mask;
   }, [target, width, height]);
 
   const toggleDebugMode = useCallback(() => {
@@ -122,23 +131,26 @@ export default function useHandwriting({
     ctx.moveTo(x, y);
   }, [lineColor, lineWidth]);
 
-  // Gambar coretan
+  // Gambar coretan dengan requestAnimationFrame throttling
   const draw = useCallback((e) => {
     if (!isDrawingRef.current) return;
     e.preventDefault();
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const { x, y } = getPointer(e);
+    if (!draw.queued) {
+      draw.queued = true;
+      requestAnimationFrame(() => {
+        draw.queued = false;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const { x, y } = getPointer(e);
 
-    const last = lastPointRef.current;
-    if (last) {
-      const dx = x - last.x, dy = y - last.y;
-      if (Math.hypot(dx, dy) < 1) return;
+        const last = lastPointRef.current;
+        if (last && Math.hypot(x - last.x, y - last.y) < 1) return;
+        lastPointRef.current = { x, y };
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      });
     }
-    lastPointRef.current = { x, y };
-    ctx.lineTo(x, y);
-    ctx.stroke();
   }, []);
 
   // Selesai gambar
@@ -170,42 +182,28 @@ export default function useHandwriting({
     }
   }, [width, height, target, debugMode]);
 
-  // Validasi coretan berdasarkan match ratio saja
+  // Validasi coretan menggunakan precomputed mask
   const compareToTarget = useCallback(() => {
     if (!hasDrawn) return false;
     const canvas = canvasRef.current;
-    const tpl = templateCanvasRef.current;
-    if (!canvas || !tpl) return false;
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const uCtx = canvas.getContext('2d');
-    uCtx.setTransform(1, 0, 0, 1, 0, 0);
-    const userData = uCtx.getImageData(0, 0, w, h).data;
-
-    const tCtx = tpl.getContext('2d');
-    tCtx.setTransform(1, 0, 0, 1, 0, 0);
-    const tplData = tCtx.getImageData(0, 0, w, h).data;
-
+    if (!canvas) return false;
+    const ctx = canvas.getContext('2d');
+    const { width: w, height: h } = canvas;
+    const userData = ctx.getImageData(0, 0, w, h).data;
     let match = 0;
-    let tplCount = 0;
-    for (let i = 0; i < userData.length; i += 4) {
-      if (tplData[i + 3] > 30) {
-        tplCount++;
-        const r = userData[i], g = userData[i+1], b = userData[i+2];
-        const isDrawn = (r < 240 || g < 240 || b < 240);
-        if (isDrawn) match++;
-      }
-    }
-
-    const matchRatio = match / tplCount;
+    const mask = maskRef.current;
+    mask.forEach(idx => {
+      const r = userData[idx], g = userData[idx+1], b = userData[idx+2];
+      if (r < 240 || g < 240 || b < 240) match++;
+    });
+    const matchRatio = match / mask.length;
+    
     console.log('Debug Info:');
     console.log('Target:', target);
     console.log('Match ratio:', matchRatio.toFixed(2));
-    console.log('Template pixels:', tplCount);
+    console.log('Template pixels:', mask.length);
     console.log('Matched pixels:', match);
 
-    // Accept if match ratio >= 8%
     return matchRatio >= 0.08;
   }, [hasDrawn, target]);
 

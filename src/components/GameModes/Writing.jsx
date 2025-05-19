@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEraser, faRedo, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faEraser, faRedo, faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import Howler from 'howler';
 
 import HomeButton from '../UI/HomeButton';
@@ -123,12 +123,8 @@ const DrawingCanvas = styled.canvas`
   touch-action: none;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
-  width: 220px; /* Kurangi ukuran dari 250px */
-  height: 220px; /* Kurangi ukuran dari 250px */
-  
-  &:hover {
-    transform: scale(1.02);
-  }
+  width: ${({ cw }) => cw}px;
+  height: ${({ ch }) => ch}px;
 `;
 
 const ControlsContainer = styled.div`
@@ -195,6 +191,99 @@ const Score = styled.div`
   z-index: 2;
 `;
 
+const Overlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const BetaWarning = styled(motion.div)`
+  position: relative;
+  background: linear-gradient(135deg, #fff9c4, #fff59d);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-width: 90%;
+  width: 450px;
+  text-align: center;
+  color: #333;
+  border: 2px solid #ffd600;
+  backdrop-filter: blur(8px);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #ffd600, #ffab00);
+    border-radius: 22px;
+    z-index: -1;
+    opacity: 0.5;
+  }
+`;
+
+const BetaWarningTitle = styled.h3`
+  font-size: 1.8rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  color: #d32f2f;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  
+  svg {
+    font-size: 1.6rem;
+    color: #d32f2f;
+  }
+`;
+
+const BetaWarningText = styled.p`
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  color: #424242;
+  font-weight: 500;
+  padding: 0 1rem;
+`;
+
+const BetaWarningButton = styled(motion.button)`
+  background: linear-gradient(135deg, #4caf50, #43a047);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  }
+`;
+
 /**
  * Writing game mode component
  * 
@@ -207,6 +296,7 @@ const Writing = () => {
   const [gameOver, setGameOver] = useState(false);
   const [showNextModal, setShowNextModal] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [showBetaWarning, setShowBetaWarning] = useState(true);
   
   // Custom hooks
   const { speak } = useTextToSpeech();
@@ -231,7 +321,7 @@ const Writing = () => {
     wrong: '/sounds/wrong.mp3',
     click: '/sounds/click-button.mp3'
   });
-  const { playMusic } = useBackgroundMusic();
+  useBackgroundMusic();
   
   // Safe cancel function with direct speech synthesis cancellation
   const safeCancel = useCallback(() => {
@@ -313,35 +403,9 @@ const Writing = () => {
     };
   }, [selectRandomTarget, safeCancel]);
   
-  // Set up canvas event listeners
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    // Mouse events
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
-    
-    // Touch events for mobile devices
-    canvas.addEventListener('touchstart', startDrawing);
-    canvas.addEventListener('touchmove', draw);
-    canvas.addEventListener('touchend', stopDrawing);
-    
-    return () => {
-      // Remove event listeners on cleanup
-      canvas.removeEventListener('mousedown', startDrawing);
-      canvas.removeEventListener('mousemove', draw);
-      canvas.removeEventListener('mouseup', stopDrawing);
-      canvas.removeEventListener('mouseleave', stopDrawing);
-      
-      canvas.removeEventListener('touchstart', startDrawing);
-      canvas.removeEventListener('touchmove', draw);
-      canvas.removeEventListener('touchend', stopDrawing);
-    };
-  }, [startDrawing, draw, stopDrawing]);
-  
+  // Disable game interaction when beta warning is shown
+  const isGameDisabled = showBetaWarning;
+
   return (
     <>
       <GameContainer>
@@ -379,12 +443,23 @@ const Writing = () => {
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
+          style={{ pointerEvents: isGameDisabled ? 'none' : 'auto' }}
         >
           <DrawingCanvas 
             ref={canvasRef}
-            width={250} 
-            height={250} 
+            cw={300}
+            ch={300}
+            width={300}
+            height={300}
             aria-label="Papan menulis"
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+            style={{ opacity: isGameDisabled ? 0.5 : 1 }}
           />
         </CanvasContainer>
         
@@ -392,6 +467,7 @@ const Writing = () => {
           initial={{ y: 50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
+          style={{ pointerEvents: isGameDisabled ? 'none' : 'auto' }}
         >
           <IconButton 
             onClick={clearCanvas}
@@ -399,6 +475,7 @@ const Writing = () => {
             aria-label="Hapus"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
+            style={{ opacity: isGameDisabled ? 0.5 : 1 }}
           >
             <FontAwesomeIcon icon={faEraser} />
           </IconButton>
@@ -409,6 +486,7 @@ const Writing = () => {
             aria-label="Ganti huruf/angka"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
+            style={{ opacity: isGameDisabled ? 0.5 : 1 }}
           >
             <FontAwesomeIcon icon={faRedo} />
           </IconButton>
@@ -420,6 +498,7 @@ const Writing = () => {
             aria-label="Periksa jawaban"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
+            style={{ opacity: isGameDisabled ? 0.5 : 1 }}
           >
             <FontAwesomeIcon icon={faCheck} />
           </IconButton>
@@ -451,6 +530,40 @@ const Writing = () => {
         onAction={restartGame}
         actionText="Main Lagi"
       />
+
+      {showBetaWarning && (
+        <Overlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <BetaWarning
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 20
+            }}
+          >
+            <BetaWarningTitle>
+              <FontAwesomeIcon icon={faExclamationTriangle} />
+              Mode Menulis (Beta)
+            </BetaWarningTitle>
+            <BetaWarningText>
+              Mode menulis masih dalam tahap pengembangan beta. Beberapa bug mungkin masih ditemukan. Mohon dimaklumi dan berikan masukan untuk pengembangan selanjutnya.
+            </BetaWarningText>
+            <BetaWarningButton 
+              onClick={() => setShowBetaWarning(false)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Mengerti
+            </BetaWarningButton>
+          </BetaWarning>
+        </Overlay>
+      )}
     </>
   );
 };
