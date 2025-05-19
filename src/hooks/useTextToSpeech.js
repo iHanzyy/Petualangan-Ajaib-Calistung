@@ -1,109 +1,79 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useRef } from 'react';
 
 /**
- * Custom hook to handle text-to-speech functionality using Web Speech API
- * Optimized for Indonesian language
+ * Custom hook untuk text-to-speech dengan antrian dan penanganan error yang lebih baik
  * 
- * @returns {Object} - Functions and state for text-to-speech
+ * @returns {Object} - Controls untuk text-to-speech
  */
 const useTextToSpeech = () => {
-  const [voices, setVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  
-  // Get available voices when component mounts
-  useEffect(() => {
-    const synth = window.speechSynthesis;
-    
-    // Function to get and set available voices
-    const updateVoices = () => {
-      const availableVoices = synth.getVoices();
-      setVoices(availableVoices);
-      
-      // Try to find Indonesian voice
-      const indonesianVoice = availableVoices.find(
-        voice => voice.lang === 'id-ID' || voice.lang.startsWith('id')
-      );
-      
-      if (indonesianVoice) {
-        setSelectedVoice(indonesianVoice);
-      } else {
-        // Fallback to first available voice
-        setSelectedVoice(availableVoices[0]);
-      }
-    };
-    
-    // Get voices - sometimes voices are loaded asynchronously
-    updateVoices();
-    
-    // Chrome and other browsers may load voices asynchronously
-    if (synth.onvoiceschanged !== undefined) {
-      synth.onvoiceschanged = updateVoices;
+  const speechQueue = useRef([]);
+  const isSpeaking = useRef(false);
+  const currentUtterance = useRef(null);
+
+  // Fungsi untuk memproses antrian
+  const processQueue = useCallback(() => {
+    if (speechQueue.current.length === 0 || isSpeaking.current) {
+      return;
     }
-    
-    // Cleanup
-    return () => {
-      if (synth.speaking) {
-        synth.cancel();
-      }
-    };
-  }, []);
-  
-  // Function to speak text
-  const speak = useCallback((text, onEnd) => {
-    if (!text) return;
-    
-    const synth = window.speechSynthesis;
-    
-    // Cancel any ongoing speech
-    if (synth.speaking) {
-      synth.cancel();
-    }
-    
+
+    isSpeaking.current = true;
+    const text = speechQueue.current.shift();
+
     const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Set voice (Indonesian if available)
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-    
-    // Set language to Indonesian
     utterance.lang = 'id-ID';
-    utterance.rate = 0.9; // Slightly slower for educational purposes
+    utterance.rate = 1.0;
     utterance.pitch = 1.0;
-    
-    // Set callbacks
-    utterance.onstart = () => setIsSpeaking(true);
+    utterance.volume = 1.0;
+
+    // Event handlers
     utterance.onend = () => {
-      setIsSpeaking(false);
-      if (onEnd) onEnd();
+      isSpeaking.current = false;
+      currentUtterance.current = null;
+      processQueue(); // Proses antrian berikutnya
     };
+
     utterance.onerror = (event) => {
-      console.error('Speech synthesis error:', event);
-      setIsSpeaking(false);
+      console.warn('Speech synthesis error:', event);
+      isSpeaking.current = false;
+      currentUtterance.current = null;
+      
+      // Jika error bukan karena interupsi, coba ulang
+      if (event.error !== 'interrupted') {
+        speechQueue.current.unshift(text);
+      }
+      
+      processQueue();
     };
-    
-    // Speak the text
-    synth.speak(utterance);
-  }, [selectedVoice]);
-  
-  // Function to stop speaking
-  const stop = useCallback(() => {
-    const synth = window.speechSynthesis;
-    if (synth.speaking) {
-      synth.cancel();
-      setIsSpeaking(false);
-    }
+
+    currentUtterance.current = utterance;
+    window.speechSynthesis.speak(utterance);
   }, []);
-  
-  return {
-    speak,
-    stop,
-    isSpeaking,
-    voices,
-    selectedVoice,
-    setSelectedVoice
-  };
+
+  // Fungsi untuk berbicara
+  const speak = useCallback((text) => {
+    if (!text) return;
+
+    // Batalkan speech yang sedang berlangsung jika ada
+    if (currentUtterance.current) {
+      window.speechSynthesis.cancel();
+      isSpeaking.current = false;
+      currentUtterance.current = null;
+    }
+
+    // Tambahkan ke antrian
+    speechQueue.current.push(text);
+    processQueue();
+  }, [processQueue]);
+
+  // Fungsi untuk menghentikan speech
+  const stop = useCallback(() => {
+    window.speechSynthesis.cancel();
+    speechQueue.current = [];
+    isSpeaking.current = false;
+    currentUtterance.current = null;
+  }, []);
+
+  return { speak, stop };
 };
 
 export default useTextToSpeech;

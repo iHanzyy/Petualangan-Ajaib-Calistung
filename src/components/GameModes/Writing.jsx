@@ -72,7 +72,7 @@ const HeaderContainer = styled.div`
   align-items: center;
   width: 100%;
   padding: 0.5rem; /* Sesuaikan padding */
-  margin-bottom: 1rem;
+  margin-bottom: -3rem;
   position: relative;
   /* Hapus background, border radius dan shadow untuk konsisten dengan mode lain */
 `;
@@ -222,7 +222,8 @@ const Writing = () => {
     width: 300,
     height: 300,
     lineColor: '#333',
-    lineWidth: 8
+    lineWidth: 8,
+    target: currentTarget
   });
   
   const { play } = useAudio({
