@@ -201,125 +201,133 @@ const Menu = () => {
   
   return (
     <MenuContainer>
-      <Title>
-        {title.split('').map((letter, index) => (
-          <AnimatedLetter 
-            key={index}
-            $delay={`${index * 0.09}s`}
-          >
-            {letter === ' ' ? '\u00A0' : letter}
-          </AnimatedLetter>
-        ))}
-      </Title>
-      
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-      >
-        <Subtitle>Mari Belajar Membaca, Menulis, dan Berhitung!</Subtitle>
-      </motion.div>
-      
-      <ButtonsContainer
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.5 }}
+        style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
       >
-        <motion.div
-          custom={0}
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-        >
-          <Link to="/reading" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
-            <MenuButton 
-              color="var(--primary-color)" 
-              aria-label="Mode Membaca"
-              whileHover={{ 
-                y: -5, 
-                boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
-              }}
-              whileTap={{ y: 0, scale: 0.95 }}
+        <Title>
+          {title.split('').map((letter, index) => (
+            <AnimatedLetter 
+              key={index} 
+              $delay={`${index * 0.09}s`}
             >
-              <IconWrapper><FontAwesomeIcon icon={faBook} /></IconWrapper>
-              Mode Membaca
-            </MenuButton>
-          </Link>
-        </motion.div>
+              {letter === ' ' ? '\u00A0' : letter}
+            </AnimatedLetter>
+          ))}
+        </Title>
         
         <motion.div
-          custom={1}
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
-          <Link to="/writing" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
-            <MenuButton 
-              color="var(--success-color)"
-              aria-label="Mode Menulis"
-              whileHover={{ 
-                y: -5, 
-                boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
-              }}
-              whileTap={{ y: 0, scale: 0.95 }}
-            >
-              <IconWrapper><FontAwesomeIcon icon={faPencilAlt} /></IconWrapper>
-              Mode Menulis
-            </MenuButton>
-          </Link>
-        </motion.div>
-        
-        <motion.div
-          custom={2}
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <Link to="/counting" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
-            <MenuButton 
-              color="var(--primary-dark-color)" 
-              aria-label="Mode Berhitung"
-              whileHover={{ 
-                y: -5, 
-                boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
-              }}
-              whileTap={{ y: 0, scale: 0.95 }}
-            >
-              <IconWrapper><FontAwesomeIcon icon={faCalculator} /></IconWrapper>
-              Mode Berhitung
-            </MenuButton>
-          </Link>
+          <Subtitle>Mari Belajar Membaca, Menulis, dan Berhitung!</Subtitle>
         </motion.div>
         
-        <motion.div
-          custom={3}
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
+        <ButtonsContainer
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Link to="/about" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
-            <MenuButton 
-              color="var(--info-color)" 
-              aria-label="Tentang Permainan"
-              whileHover={{ 
-                y: -5, 
-                boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
-              }}
-              whileTap={{ y: 0, scale: 0.95 }}
-            >
-              <IconWrapper><FontAwesomeIcon icon={faInfoCircle} /></IconWrapper>
-              Tentang Permainan
-            </MenuButton>
-          </Link>
+          <motion.div
+            custom={0}
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <Link to="/reading" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
+              <MenuButton 
+                color="var(--primary-color)" 
+                aria-label="Mode Membaca"
+                whileHover={{ 
+                  y: -5, 
+                  boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
+                }}
+                whileTap={{ y: 0, scale: 0.95 }}
+              >
+                <IconWrapper><FontAwesomeIcon icon={faBook} /></IconWrapper>
+                Mode Membaca
+              </MenuButton>
+            </Link>
+          </motion.div>
+          
+          <motion.div
+            custom={1}
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            <Link to="/writing" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
+              <MenuButton 
+                color="var(--success-color)"
+                aria-label="Mode Menulis"
+                whileHover={{ 
+                  y: -5, 
+                  boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
+                }}
+                whileTap={{ y: 0, scale: 0.95 }}
+              >
+                <IconWrapper><FontAwesomeIcon icon={faPencilAlt} /></IconWrapper>
+                Mode Menulis
+              </MenuButton>
+            </Link>
+          </motion.div>
+          
+          <motion.div
+            custom={2}
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            <Link to="/counting" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
+              <MenuButton 
+                color="var(--primary-dark-color)" 
+                aria-label="Mode Berhitung"
+                whileHover={{ 
+                  y: -5, 
+                  boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
+                }}
+                whileTap={{ y: 0, scale: 0.95 }}
+              >
+                <IconWrapper><FontAwesomeIcon icon={faCalculator} /></IconWrapper>
+                Mode Berhitung
+              </MenuButton>
+            </Link>
+          </motion.div>
+          
+          <motion.div
+            custom={3}
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
+            <Link to="/about" style={{ textDecoration: 'none', display: 'block', width: '100%' }}>
+              <MenuButton 
+                color="var(--info-color)" 
+                aria-label="Tentang Permainan"
+                whileHover={{ 
+                  y: -5, 
+                  boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)" 
+                }}
+                whileTap={{ y: 0, scale: 0.95 }}
+              >
+                <IconWrapper><FontAwesomeIcon icon={faInfoCircle} /></IconWrapper>
+                Tentang Permainan
+              </MenuButton>
+            </Link>
+          </motion.div>
+        </ButtonsContainer>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
+        >
+          <SoundControl />
         </motion.div>
-      </ButtonsContainer>
-      
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.7, duration: 0.5 }}
-      >
-        <SoundControl />
       </motion.div>
     </MenuContainer>
   );

@@ -17,12 +17,6 @@ const fadeIn = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
-// Animasi untuk background bersinar
-const glow = keyframes`
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-`;
-
 // Animasi untuk rotasi karakter
 const rotate = keyframes`
   0% { transform: rotate(0deg); }
@@ -39,11 +33,24 @@ const InitialContainer = styled.div`
   justify-content: center;
   height: 100vh;
   width: 100%;
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-  background-size: 400% 400%;
-  animation: ${glow} 15s ease infinite;
+  background-image: url('/images/initialScreen.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow: hidden;
   position: relative;
+  z-index: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3); /* Add a slight dark overlay for text visibility */
+    z-index: -1;
+  }
 `;
 
 // Gelembung animasi di background
@@ -83,7 +90,7 @@ const Character = styled.div`
 const Title = styled.h1`
   font-size: 3rem;
   color: white;
-  text-shadow: 2px 4px 8px rgba(0,0,0,0.3);
+  text-shadow: 2px 4px 8px rgba(0,0,0,0.5);
   animation: ${fadeIn} 1.5s ease-out;
   text-align: center;
   margin-bottom: 1.5rem;
@@ -93,7 +100,7 @@ const Title = styled.h1`
 const Subtitle = styled.p`
   font-size: 1.5rem;
   color: white;
-  text-shadow: 1px 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 1px 2px 4px rgba(0,0,0,0.4);
   animation: ${fadeIn} 1.5s ease-out 0.5s both;
   text-align: center;
   margin-bottom: 2rem;
@@ -167,32 +174,27 @@ const InitialScreen = () => {
           console.log("Audio context resumed successfully");
           playMusic();
           
-          // Navigate after ensuring audio is playing
-          setTimeout(() => {
-            navigate('/splash');
-          }, 300);
+          // Navigate immediately to splash screen
+          navigate('/splash');
         }).catch(err => {
           console.error('Failed to resume audio context:', err);
           playMusic(); // Try anyway
           
-          setTimeout(() => {
-            navigate('/splash');
-          }, 300);
+          // Navigate immediately to splash screen
+          navigate('/splash');
         });
       } else {
         // Play directly if context is ready
         console.log("Audio context ready, playing music directly");
         playMusic();
         
-        setTimeout(() => {
-          navigate('/splash');
-        }, 200);
+        // Navigate immediately to splash screen
+        navigate('/splash');
       }
     } else {
       console.log("Music is already playing, just navigating");
-      setTimeout(() => {
-        navigate('/splash');
-      }, 100);
+      // Navigate immediately to splash screen
+      navigate('/splash');
     }
   };
 
