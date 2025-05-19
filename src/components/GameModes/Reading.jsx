@@ -24,6 +24,11 @@ const SAMPLE_WORDS = [
 
 // Function to get image path for a word
 const getWordImagePath = (word) => {
+  // Special cases for specific words
+  if (word === 'Langit') return '/images/langit.jpg';
+  if (word === 'Laut') return '/images/laut.jpg';
+  
+  // Default case for other words
   return `/images/${word.toLowerCase()}.png`;
 };
 
