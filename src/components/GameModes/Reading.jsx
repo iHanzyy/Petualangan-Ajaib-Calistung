@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrophone, faVolumeUp, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faMicrophone, faVolumeUp, faSync, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { faChrome } from '@fortawesome/free-brands-svg-icons';
+import { motion } from 'framer-motion';
 import Howler from 'howler';
 
 import HomeButton from '../UI/HomeButton';
@@ -194,6 +196,108 @@ const Score = styled.div`
   z-index: 2;
 `;
 
+const Overlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const BrowserWarning = styled(motion.div)`
+  position: relative;
+  background: linear-gradient(135deg, #f2f9fe, #e6f3ff);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-width: 90%;
+  width: 450px;
+  text-align: center;
+  color: #333;
+  border: 2px solid #4285f4;
+  backdrop-filter: blur(8px);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #4285f4, #34a853);
+    border-radius: 22px;
+    z-index: -1;
+    opacity: 0.3;
+  }
+`;
+
+const BrowserWarningTitle = styled.h3`
+  font-size: 1.8rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  color: #4285f4;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+  
+  svg {
+    font-size: 1.6rem;
+    color: #4285f4;
+  }
+`;
+
+const ChromeLogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem 0;
+  font-size: 3rem;
+  color: #4285f4;
+`;
+
+const BrowserWarningText = styled.p`
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  color: #424242;
+  font-weight: 500;
+  padding: 0 1rem;
+`;
+
+const BrowserWarningButton = styled(motion.button)`
+  background: linear-gradient(135deg, #4285f4, #3367d6);
+  color: white;
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(66, 133, 244, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+  }
+`;
+
 /**
  * Reading game mode component
  * 
@@ -208,6 +312,9 @@ const Reading = () => {
   const [gameOver, setGameOver] = useState(false);
   const [showNextModal, setShowNextModal] = useState(false);
   const [modalImage, setModalImage] = useState('');
+  
+  // Tambahkan state untuk browser warning modal
+  const [showBrowserWarning, setShowBrowserWarning] = useState(true);
   
   // Custom hooks
   const { speak, isSpeaking } = useTextToSpeech();
@@ -351,6 +458,11 @@ const Reading = () => {
     };
   }, [selectRandomWord, safeCancel]);
   
+  // Fungsi untuk menutup modal peringatan browser
+  const handleCloseBrowserWarning = () => {
+    setShowBrowserWarning(false);
+  };
+  
   return (
     <>
       <GameContainer>
@@ -442,6 +554,47 @@ const Reading = () => {
         onAction={restartGame}
         actionText="Main Lagi"
       />
+      
+      {/* Tambahkan Browser Warning Modal */}
+      {showBrowserWarning && (
+        <Overlay
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <BrowserWarning
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 20
+            }}
+          >
+            <BrowserWarningTitle>
+              <FontAwesomeIcon icon={faExclamationCircle} />
+              Rekomendasi Browser
+            </BrowserWarningTitle>
+            
+            <ChromeLogoContainer>
+              <FontAwesomeIcon icon={faChrome} />
+            </ChromeLogoContainer>
+            
+            <BrowserWarningText>
+              Untuk pengalaman terbaik dalam Mode Membaca, gunakan browser Google Chrome. Fitur pengenalan suara bekerja optimal pada Chrome versi terbaru.
+            </BrowserWarningText>
+            
+            <BrowserWarningButton 
+              onClick={handleCloseBrowserWarning}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Mengerti
+            </BrowserWarningButton>
+          </BrowserWarning>
+        </Overlay>
+      )}
     </>
   );
 };
