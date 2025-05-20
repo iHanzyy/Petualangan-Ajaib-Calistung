@@ -338,7 +338,7 @@ const Writing = () => {
     setCurrentTarget(newTarget);
     clearCanvas();
     setIsCorrect(false);
-    speak(`Tulis huruf ${newTarget}`);
+    speak(`Tulis ${newTarget}`);
   }, [clearCanvas, speak]);
   
   // Check if the drawn input matches the target
@@ -353,7 +353,7 @@ const Writing = () => {
       setScore(prev => prev + 10);
       setTimeout(() => {
         setShowNextModal(true);
-        speak(`Kamu berhasil menulis '${currentTarget}' dengan benar. Lanjutkan ke huruf berikutnya?`);
+        speak(`Kamu berhasil menulis '${currentTarget}' dengan benar. Lanjutkan ke huruf atau angka berikutnya?`);
       }, 500);
     } else {
       play('wrong');
@@ -513,7 +513,7 @@ const Writing = () => {
         isSuccess={isCorrect}
         title={isCorrect ? "Hebat!" : "Coba Lagi"}
         message={isCorrect 
-          ? `Kamu berhasil menulis '${currentTarget}' dengan benar. Lanjutkan ke huruf berikutnya?` 
+          ? `Kamu berhasil menulis '${currentTarget}' dengan benar. Lanjutkan ke huruf atau angka berikutnya?` 
           : `Tulisanmu belum tepat. Coba tulis '${currentTarget}' lagi ya!`}
         imageSrc={isCorrect ? "/images/success.png" : "/images/try-again.png"}
         onClose={handleNextTarget}
