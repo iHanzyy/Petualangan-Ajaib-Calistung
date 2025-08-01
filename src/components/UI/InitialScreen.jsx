@@ -5,33 +5,7 @@ import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import useBackgroundMusic from '../../hooks/useBackgroundMusic';
 import SoundButton from './SoundButton';
-
-// Animasi untuk karakter melompat dan sedikit rotasi - NOT USED NOW, MOVED TO FRAMER-MOTION
-/*
-const bounce = keyframes`
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-15px) rotate(-3deg); }
-  75% { transform: translateY(-15px) rotate(3deg); }
-`;
-*/
-
-// Animasi untuk judul muncul - TIDAK DIGUNAKAN LAGI
-/*
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(-50px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-*/
-
-// Animasi untuk rotasi karakter - TIDAK DIGUNAKAN LAGI
-/*
-const rotate = keyframes`
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(-5deg); }
-  75% { transform: rotate(5deg); }
-  100% { transform: rotate(0deg); }
-`;
-*/
+import AboutUsModal from './AboutUsModal'; // Add this import
 
 // Animasi untuk sparkles
 const sparkle = keyframes`
@@ -213,6 +187,45 @@ const StartButton = styled(SoundButton)`
   }
 `;
 
+// Create a new button for "Tentang Kami"
+const AboutButton = styled(motion.button)`
+  padding: 1rem 2rem;
+  font-size: 1.4rem;
+  font-family: 'Cal Sans', sans-serif;
+  background: linear-gradient(135deg, #70C1B3 0%, #4BA698 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  margin-top: 1rem;
+  transition: 
+    box-shadow 0.25s cubic-bezier(.4,2,.6,1),
+    transform 0.18s cubic-bezier(.4,2,.6,1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(120deg, #9FDED5 0%, #4BA698 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: -1;
+    border-radius: 50px;
+  }
+
+  &:hover::before {
+    opacity: 0.18;
+  }
+
+  &:active {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+`;
+
 // Add AnimatedLetter component after other styled components
 const AnimatedLetter = styled.span`
   display: inline-block;
@@ -224,6 +237,7 @@ const InitialScreen = () => {
   const navigate = useNavigate();
   const { playMusic, isMusicPlaying } = useBackgroundMusic();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isAboutModalOpen, setAboutModalOpen] = useState(false); // Add this state
   
   // Add title constant for the animated text
   const title = "PETUALANGAN AJAIB CALISTUNG";
@@ -386,6 +400,34 @@ const InitialScreen = () => {
       >
         Mulai Petualangan
       </StartButton>
+      
+      {/* Add the About Us button below */}
+      <AboutButton
+        onClick={() => setAboutModalOpen(true)}
+        initial={{ scale: 0.8, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0, transition: { type: "spring", stiffness: 400, damping: 18, delay: 0.6 } }}
+        exit={{ opacity: 0, y: 20, transition: { duration: 0.3, ease: "easeInOut" } }}
+        whileHover={{
+          scale: 1.05,
+          y: -3,
+          boxShadow: "0 6px 20px rgba(0,0,0,0.2)",
+          transition: { type: "spring", stiffness: 400, damping: 12 }
+        }}
+        whileTap={{
+          scale: 0.96,
+          y: 0,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+          transition: { type: "spring", stiffness: 400, damping: 10 }
+        }}
+      >
+        Tentang Kami
+      </AboutButton>
+      
+      {/* Add the About Us Modal component */}
+      <AboutUsModal 
+        isOpen={isAboutModalOpen} 
+        onClose={() => setAboutModalOpen(false)} 
+      />
     </InitialContainer>
   );
 };
